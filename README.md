@@ -114,4 +114,4 @@ provenance entirely can rebuild the development and lose nothing.
 
 ## License
 
-Not yet chosen — add one before making this public.
+MIT — see [LICENSE](LICENSE). Mathlib, on which this depends, is Apache-2.0.
