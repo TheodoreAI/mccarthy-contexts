@@ -2,3 +2,7 @@
 lake-manifest.json
 *.olean
 *.ilean
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.pdf

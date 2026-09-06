@@ -1,0 +1,489 @@
+\documentclass[11pt]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage[margin=1.15in]{geometry}
+\usepackage{microtype}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+
+% ---- theorem environments -------------------------------------------------
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{lemma}[theorem]{Lemma}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+% ---- provenance marks and Lean identifiers --------------------------------
+% Every result carries its provenance, because the three kinds differ in what
+% they can be held to.  See the legend in Section 1.
+\newcommand{\prov}[1]{\textnormal{\footnotesize\textsc{#1}}}
+\newcommand{\leanref}[1]{%
+  \par\smallskip\noindent{\footnotesize\ttfamily #1}\par}
+
+% ---- notation -------------------------------------------------------------
+\newcommand{\ist}{\mathit{ist}}
+\newcommand{\Cn}{\operatorname{Cn}}
+\newcommand{\Cncirc}{\operatorname{Cn_{circ}}}
+\newcommand{\truths}{\operatorname{truths}}
+\newcommand{\Mod}{\operatorname{Mod}}
+\newcommand{\Lift}{\operatorname{Lift}}
+\newcommand{\True}{\mathit{True}}
+\newcommand{\CL}{\mathit{CL}}
+
+\title{Harmless and Pointless\\[0.3em]
+  \large Consistency, rigidity, and the indeterminacy of context transfer\\
+  in McCarthy's formalization of context}
+\author{Mateo Estrada}
+\date{5 September 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+In \emph{Notes on Formalizing Context} (1993), John McCarthy proposed treating
+contexts as first-class objects related by $\ist(c,p)$, observed that this
+generates an infinite regress of outer contexts, and asserted without proof that
+``the regress is infinite, but \ldots\ it is harmless.'' We prove it, and then
+show what the proof costs. The regress is harmless precisely because it is
+\emph{rigid}: the transcendence schema does not merely permit the model in which
+each context copies the one below, it forces it. That rigidity is fatal to the
+case McCarthy identifies as interesting, in which a transcending context relaxes
+an assumption of the old; we show the two are formally incompatible rather than
+merely different. We then examine the natural repairs. Minimizing change over
+valuations is degenerate: the minimum always exists, is unique, and changes
+nothing. Taking contexts to be theories rescues the phenomenon---dropping an
+assumption can create a conclusion---but the accompanying lifting rule is doubly
+underdetermined: circumscription admits incomparable minimal resolutions, and
+transfer is \emph{route-dependent}, failing between compatible endpoints when
+passed through an intermediary. All 21 results are machine-checked in Lean 4 and
+free of \texttt{sorry}. The development is available at
+\url{https://github.com/TheodoreAI/mccarthy-contexts} under an MIT license.
+\end{abstract}
+
+% ===========================================================================
+\section{The claim that was never proved}
+
+McCarthy's proposal is that a proposition is true \emph{in a context}, written
+$\ist(c,p)$, and that contexts are objects one can reason about. The difficulty
+he immediately notices is that an assertion of $\ist(c,p)$ is itself made
+somewhere---in some outer context---so one has ``something like
+$\ist(c_0, \ist(c,p))$'', and so on without end.
+
+Two passages carry the claim we address. In \S1 he writes that ``the regress is
+infinite, but we will show that it is harmless.'' The promised demonstration
+does not appear. In \S5, ``Transcending Contexts,'' the same regress is given
+its operational form: believing $p$ unconditionally is taken to be equivalent to
+$\ist(c_0,p)$, and the step may be repeated indefinitely.
+
+McCarthy is explicit that his proposals are ``incomplete and tentative'' and
+that he will use formulas that ``aren't always compatible with each other.'' A
+consistency claim needs a precise system to attach to, so the work below first
+fixes one, proves the claim for it, and is then careful about how far the result
+reaches.
+
+\paragraph{Provenance.}
+Every result is marked, since the three kinds differ in what they can be held
+to. \prov{McCarthy} marks a claim he asserts and we prove. \prov{Analysis} marks
+a proposal he makes in passing without working out, where the formulation is
+ours and a reader should check it against his text. \prov{New} marks results
+that go beyond his paper altogether. Every result is additionally verified by
+the Lean kernel; Section~\ref{sec:formalization} says what that does and does
+not buy.
+
+% ===========================================================================
+\section{The tower, and why it is harmless}
+
+Fix a countable set of propositional atoms and build a cumulative tower of
+languages $L_0 \subseteq L_1 \subseteq \cdots$, where $L_{n+1}$ adjoins one new
+atom $\ist_n(\varphi)$ for each $\varphi \in L_n$. The transcendence schema
+$\Gamma$ is the set of sentences
+\[
+  \ist_n(\varphi) \leftrightarrow \varphi,
+  \qquad n \ge 0,\ \varphi \in L_n .
+\]
+
+The decisive feature is that $\ist_n$ is \emph{typed}: it applies only to
+formulas of level $n$. No formula can apply $\ist_n$ to itself, so no analogue
+of the Liar sentence---and no analogue of Russell's paradox for
+$\ist$---can be written down at all. This is Tarski's remedy \cite{tarski}, and
+McCarthy's own appeal to reflection principles points at it; what was missing
+was carrying the analogy out.
+
+\begin{theorem}[\prov{McCarthy}]\label{thm:one}
+$\Gamma$ is satisfiable, hence consistent.
+\end{theorem}
+\leanref{TranscendenceTower.transcendence\_tower\_satisfiable}
+
+The proof is an increasing chain of classical valuations. $M_0$ assigns truth
+values to the base atoms arbitrarily; $M_{n+1}$ keeps every old value and sets
+$M_{n+1}(\ist_n(\varphi)) = M_n(\varphi)$. This is well defined because
+$\varphi$ ranges only over $L_n$, on which $M_n$ was fixed one stage
+earlier: each new atom is read off a valuation settled before the new language
+existed. No compactness argument is needed.
+
+\begin{corollary}[\prov{McCarthy}]
+For every ordinal $\alpha$, the tower extended to stage $\alpha$ is consistent.
+\end{corollary}
+\leanref{TranscendenceTower.Transfinite.Gamma\_satisfiable}
+
+McCarthy raises transfinite iteration and sets it aside. The mathematics extends
+without new ideas, but the \emph{formalization} does not: limit stages must be
+handled explicitly, and that is the one place the construction could fail.
+
+\begin{lemma}[\prov{McCarthy}]
+For a limit ordinal $\lambda$, every formula of $L_\lambda$ already belongs to
+some $L_\beta$ with $\beta < \lambda$.
+\end{lemma}
+\leanref{TranscendenceTower.Transfinite.limit\_stage\_union}
+
+A formula is a finite object: it mentions finitely many levels, all below the
+limit. So at a limit stage nothing new is decided---the stage only collects what
+earlier stages already settled.
+
+% ===========================================================================
+\section{Reifying a level}
+
+McCarthy suggests the formalism ``might be further extended to provide so that
+in $c_{-1}$ the whole set of sentences true in $c_0$ is an object
+$\truths(c_0)$.'' That is the whole of his text on the matter: one sentence,
+with no axioms and no claims attached. The results of this section are therefore
+analysis rather than transcription---the formulations are ours, and a reader
+assessing faithfulness has only that sentence to compare them against. Naming
+the set turns out to be free; claiming it is \emph{complete} does not.
+
+\begin{proposition}[\prov{Analysis}]
+The Tarski schema $\True_0(\ulcorner\varphi\urcorner) \leftrightarrow \varphi$
+is consistent and conservative over $L_0$: every valuation of the base language
+is the reduct of a model of it.
+\end{proposition}
+\leanref{TranscendenceTower.Reification.T0\_consistent\_and\_conservative}
+
+Tarski's undefinability theorem is sometimes misread as forbidding this. It
+forbids a sufficiently strong language from defining \emph{its own} truth
+predicate; here $\True_0$ sits one level above the language it describes, which
+is the stratified arrangement Tarski proposed as the remedy.
+
+\begin{proposition}[\prov{Analysis}]\label{prop:closure}
+The closure axiom $\CL(S)$---``the extension of $\True_0$ is exactly
+$S$''---is not conservative. There are a satisfiable such theory and a base
+sentence it refutes although the base language leaves it open.
+\end{proposition}
+\leanref{TranscendenceTower.Reification.closure\_not\_conservative}
+
+The three-part shape of that statement is not decoration; see
+Section~\ref{sec:formalization}. The negative information a closure axiom
+supplies---\emph{nothing else is true here}---is precisely what definitional
+extension cannot deliver, and nonmonotonic machinery of this kind is McCarthy's
+own invention \cite{circumscription}: $\CL(S)$ is a circumscription of
+$\True_0$.
+
+\begin{theorem}[\prov{Analysis}]
+If $S \neq S'$ then $T_0 + \CL(S) + \CL(S')$ is inconsistent.
+\end{theorem}
+\leanref{TranscendenceTower.Reification.closure\_collide}
+
+Two completeness claims about the same level, each honestly made, cannot both be
+held merely because each was made in good faith. This bites a single agent as
+much as two: a completeness claim made today and another made tomorrow, about
+the same level after it has changed, are formally contradictory. The repair is
+to relativize---a completeness claim must carry the state it was computed
+against---and relativized claims about distinct states coexist
+(\texttt{relativized\_satisfiable}).
+
+% ===========================================================================
+\section{Harmless because rigid}
+
+Here the paper goes beyond anything in McCarthy's text. The consistency result
+of Section~2 understates what the schema does, and the stronger statement
+explains both why the tower is safe and why it is uninteresting.
+
+\begin{theorem}[\prov{New}]\label{thm:categorical}
+$\Gamma$ is categorical over the base: any two contexts extending the same
+level-0 valuation and satisfying $\Gamma$ are equal.
+\end{theorem}
+\leanref{TranscendenceTower.Relaxation.schema\_unique}
+
+The schema does not merely permit the copy model; it forces it. This is the
+precise content of the observation that each stage is ``a definitional extension
+in disguise'': every new atom arrives with an axiom defining it outright in
+older vocabulary. Definitional extensions are conservative and preserve
+consistency---which is exactly why the tower is harmless, and exactly why
+McCarthy calls the resulting picture ``pointless'', the new sentences being
+``more elaborate versions of the old.''
+
+\begin{theorem}[\prov{New}]
+No context both satisfies $\Gamma$ and relaxes an assumption of the level below.
+\end{theorem}
+\leanref{TranscendenceTower.Relaxation.no\_relaxing\_model\_of\_schema}
+
+So the two cases McCarthy distinguishes are not two situations to be handled in
+turn. They are formally exclusive. This explains, rather than restates, why a
+consistency proof for the tower cannot reach the interesting case: the obstacle
+is not that the technique is too weak but that the statement being proved
+concerns a schema which relaxation contradicts. The loss is immediate---dropping
+a single instance already admits two distinct extensions
+(\texttt{relaxed\_not\_definitional}), so no weakened form of definitional
+extension survives partial relaxation.
+
+% ===========================================================================
+\section{Minimal change is degenerate}
+
+If relaxation leaves several contexts available, the natural repair is to prefer
+the one that changes least---circumscription, which is McCarthy's own
+instrument. Write $\Delta(N)$ for the set of assumptions at which a transcending
+context departs from the one below, and $\Mod(v,A)$ for the contexts obeying the
+schema outside a relaxation set $A$.
+
+\begin{theorem}[\prov{New}]\label{thm:bijection}
+$\Delta$ is a bijection from $\Mod(v,A)$ onto the subsets of $A$. Relaxing $k$
+assumptions leaves exactly $2^k$ contexts, and the relaxed schema constrains
+nothing beyond the location of change.
+\end{theorem}
+\leanref{TranscendenceTower.MinimalChange.delta\_bijection}
+
+Injectivity turns on truth values being \emph{Boolean}: knowing where a context
+departs from the base determines what it says there, because only one
+alternative exists. That observation makes the next result inevitable, and it
+also tells us where to go afterwards.
+
+\begin{theorem}[\prov{New}]\label{thm:collapse}
+For every relaxation set, the copy context is the unique $\Delta = \emptyset$
+model and hence the $\subseteq$-minimum. Preferring minimal change returns the
+unrelaxed tower no matter what was relaxed.
+\end{theorem}
+\leanref{TranscendenceTower.MinimalChange.copy\_is\_minimum}
+
+Circumscribing the abnormality recovers precisely the case McCarthy calls
+pointless. Permitting a context to drop an assumption never forces it to, and
+the minimal-change reading always declines. By contrast, \emph{specifying} the
+change set determines the context uniquely (\texttt{forced\_unique}). The
+content of a logic of relaxing contexts therefore cannot come from a preference
+order over these models; it must come from saying which assumptions are dropped.
+
+% ===========================================================================
+\section{Contexts as theories}
+
+A valuation has no interior: each atom is independent, and changing one moves
+nothing else. So we change what a context \emph{is}. Let a context be a set of
+sentences and let ``true in the context'' mean derivable from it. Now dropping
+an assumption alters a whole consequence set rather than flipping one bit---and
+a minimality principle has something to act on.
+
+\begin{theorem}[\prov{New}]\label{thm:nonmono}
+Classical consequence is monotone; circumscriptive consequence is not. There are
+$T' \subseteq T$ and $\varphi$ with $\varphi \in \Cncirc(T')$ and
+$\varphi \notin \Cncirc(T)$.
+\end{theorem}
+\leanref{TranscendenceTower.ContextTheories.circ\_nonmonotone}
+
+The witness is the standard default: \emph{birds fly unless abnormal}, plus a
+bird. Nothing forces abnormality, so the most normal world has none, and the
+bird flies. Assert abnormality and the conclusion is withdrawn---more
+information, fewer conclusions. Read in the direction of relaxation,
+\emph{removing} the abnormality assumption \emph{creates} the conclusion, which
+is the dropped-assumption phenomenon McCarthy wants.
+
+One guard matters: the conclusion is \emph{not} a classical consequence of the
+smaller theory (\texttt{default\_reasoning\_works}). Without that check one
+could object that circumscription merely inherited what logic already gave.
+
+Note what changed and what did not. The \emph{same} minimality principle that
+did nothing over valuations does real work over theories. One variable was
+changed, and the outcome reversed.
+
+% ===========================================================================
+\section{Lifting, and two failures of determinacy}
+
+McCarthy's \emph{specializes} axiom transfers facts between contexts unless
+abnormal for the transfer:
+\[
+  \mathit{specializes}(c_1,c_2) \wedge \neg \mathit{ab}(p,c_1,c_2)
+  \wedge \ist(c_1,p) \rightarrow \ist(c_2,p).
+\]
+We model a transfer by a \emph{blocking set}---the assertions declared
+abnormal---and circumscription as preferring the smallest one. Nothing here
+assumes the contexts are stacked, so this covers sibling contexts, not only
+tower levels. Unblocked, lifting delivers what it promises
+(\texttt{lift\_transfers}); a conflicting target forces a block and the fact
+does not survive it (\texttt{lift\_defeasible}). Then two things go wrong.
+
+\begin{theorem}[\prov{New}]\label{thm:extensions}
+A source asserting $p$ and $q$ lifted into a target asserting
+$\neg(p \wedge q)$ admits two incomparable minimal blocking sets. Minimizing
+abnormality does not determine the lifted context.
+\end{theorem}
+\leanref{TranscendenceTower.Lifting.lift\_multiple\_extensions}
+
+This is the familiar multiple-extensions phenomenon of nonmonotonic reasoning,
+and we claim no novelty for it. What the result contributes is its
+\emph{location}: the failure occurs inside the rule that transfers facts between
+contexts, on the same semantics used throughout, at the point where a theory of
+contexts most needs a determinate answer.
+
+\begin{theorem}[\prov{New}]\label{thm:route}
+With $c_1 \vdash p$, $c_2 \vdash q$ and $c_3 \vdash \neg(p \wedge q)$: directly,
+$p$ transfers to $c_3$ determinately. Through $c_2$, two incomparable minimal
+resolutions appear and $p$ survives only one.
+\end{theorem}
+\leanref{TranscendenceTower.Chaining.lifting\_does\_not\_chain}
+
+The endpoints do not conflict: $p$ and $\neg(p \wedge q)$ hold together. The
+indeterminacy is manufactured entirely by the route, because the first hop
+deposits $c_2$'s own commitment into the destination alongside $p$. So
+\emph{specializes} composes as a relation between contexts while the transfer it
+licenses does not: the composite is not determined by its endpoints, and lifting
+cannot be chained freely to reach a distant context.
+
+% ===========================================================================
+\section{What the three failures have in common}
+
+Minimizing abnormality fails to deliver a context three times, in three
+different ways, and the pattern is the argument of this paper.
+
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Setting & Minima & Failure \\
+\midrule
+Valuations & unique & always the trivial one---no information \\
+Theories, one transfer & plural & incomparable---no choice made \\
+Theories, composed transfers & route-relative & not determined by the endpoints \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\medskip
+
+The first two are complementary rather than repetitive: over valuations
+minimization is uninformative because the minimum is trivial, over theories
+because the minima are several. The third is worse than either, since it defeats
+the natural assumption that a relation between contexts can be followed
+transitively.
+
+None of this shows that no logic of relaxing contexts exists. It locates
+precisely what such a logic must supply and cannot obtain from minimality alone:
+a priority among defaults, or an explicit record of which assumptions were
+dropped and by which route. That is a constraint on the programme, not a defect
+of these examples.
+
+% ===========================================================================
+\section{On the formalization}\label{sec:formalization}
+
+All results are Lean 4 (toolchain \texttt{v4.33.1}, Mathlib \texttt{0df444a3}),
+free of \texttt{sorry}, \texttt{admit} and \texttt{native\_decide}, with axiom
+use confined to \texttt{propext}, \texttt{Classical.choice} and
+\texttt{Quot.sound}. Several depend on no axioms at all.
+
+The development is public at
+\url{https://github.com/TheodoreAI/mccarthy-contexts} under an MIT license, with
+the toolchain and Mathlib revision pinned to the environment above.
+\texttt{lake build} checks every result; \texttt{scripts/verify.sh} runs the
+whole gate---build, a scan for unproved holes, and the axiom audit---and exits
+non-zero if any part fails, so the claims of this section can be rechecked
+rather than taken on trust.
+
+Machine checking prevents gaps in proofs. It does not prevent a proof of the
+wrong thing, and the two failures worth reporting are of that kind.
+
+\paragraph{A vacuous theorem that compiled.}
+An early statement of Proposition~\ref{prop:closure} read: \emph{every model of
+$T_0 + \CL(\emptyset)$ refutes $\varphi$}. It compiled, contained no
+\texttt{sorry}, and was worthless. In any model of $T_0$ the extension of
+$\True_0$ contains every tautology, so it is never empty and the theory has no
+models at all; a refutation claim about a theory with no models establishes
+nothing. The published form therefore asserts \emph{satisfiability} as an
+explicit conjunct.
+
+This motivated a standing check applied to every result here: for any statement
+quantifying over models, prove the model class non-empty; for any hypothesis
+defined in-file, exhibit a witness. The transfinite development defines its own
+notion of limit ordinal, so it also proves that $\omega$ satisfies it---otherwise
+the limit-stage lemma would be quietly empty.
+
+\paragraph{Naming what is not proved.}
+The second discipline is scope. Theorem~\ref{thm:one} is a statement about a
+\emph{stratified propositional} system in which each context copies the one
+below. It is not a proof that McCarthy's formalism is consistent, which cannot
+currently be evaluated because it was never made precise. Extending the
+language---in particular by quantifying over contexts as first-class
+terms---would not falsify Theorem~\ref{thm:one}; it would produce a different
+system to which the theorem does not apply. Since stratification is what the
+proof rests on, that extension is also the one most likely to break it, and it
+should be attempted deliberately rather than by accident.
+
+\paragraph{Disclosure: AI assistance.}
+The Lean development and the text of this paper were produced with Claude
+(Anthropic, Opus~5), in a session directed by the author, who set the targets,
+chose the formulations and the scope of each claim, and decided which lines of
+enquiry to pursue. The standing of the results does not rest on that assistance.
+Every theorem is checked by the Lean kernel, which is independent of the process
+that produced the proof: a proof term either type-checks against the stated type
+or it does not, and the axiom audit is machine-generated rather than asserted. A
+reader who distrusts the provenance entirely can recheck the development and
+lose nothing. What machine checking does not supply is assurance that the
+\emph{intended} statement was proved, and that is where assistance of this kind
+can go wrong silently---the vacuous formulation described above arose in exactly
+this way, and was caught by the discipline of this section rather than by
+reading the proof.
+
+% ===========================================================================
+\section{Open}
+
+\begin{itemize}[leftmargin=1.2em]
+  \item \textbf{Priorities among defaults.} The direct response to Section~7:
+    does a priority ordering restore a unique lifted context, and under exactly
+    what condition?
+  \item \textbf{Quantification over contexts.} First-class context terms, faced
+    together with the self-reference risk described in
+    Section~\ref{sec:formalization}.
+  \item \textbf{The theory-level tower.} The results of Section~6 concern one
+    step. Whether the nonmonotonic behaviour survives iteration, and what
+    happens at limit stages, is untouched.
+\end{itemize}
+
+% ===========================================================================
+\begin{thebibliography}{9}
+
+\bibitem{notes}
+J.~McCarthy. \emph{Notes on Formalizing Context.} Stanford, 1993
+(\texttt{context-2.tex}, created winter 1991).
+
+\bibitem{circumscription}
+J.~McCarthy. Circumscription---a form of non-monotonic reasoning.
+\emph{Artificial Intelligence} 13 (1980), 27--39.
+
+\bibitem{generality}
+J.~McCarthy. Generality in Artificial Intelligence. \emph{CACM} 30:12 (1987),
+1030--1035.
+
+\bibitem{tarski}
+A.~Tarski. Der Wahrheitsbegriff in den formalisierten Sprachen.
+\emph{Studia Philosophica} 1 (1936).
+
+\bibitem{buvac93}
+S.~Buva\v{c} and I.~A.~Mason. Propositional logic of context. \emph{AAAI-93},
+412--419.
+
+\bibitem{buvac96}
+S.~Buva\v{c}. Quantificational logic of context. \emph{AAAI-96}.
+
+\bibitem{feferman}
+S.~Feferman. Transfinite recursive progressions of axiomatic theories.
+\emph{JSL} 27:3 (1962), 259--316.
+
+\end{thebibliography}
+
+\medskip
+\noindent{\footnotesize Buva\v{c} and Mason \cite{buvac93} prove soundness,
+completeness and decidability for a considerably richer propositional logic of
+context than the fragment treated here, with a single modality $\ist(k,\varphi)$
+and per-context vocabularies. Their result is strictly more general on that
+axis; the development above is correspondingly more elementary, needing nothing
+beyond direct limits of classical valuations.}
+
+\end{document}

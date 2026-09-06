@@ -89,6 +89,11 @@ fault:
 has already done its work by then, so check the manifest exists and go straight
 to `lake exe cache get`.
 
+## Paper
+
+The accompanying paper, *Harmless and Pointless*, is in [`paper/`](paper/) as
+LaTeX source. Each of its theorems cites the Lean identifier that proves it.
+
 ## On method
 
 Machine checking prevents gaps in proofs. It does not prevent proving the wrong
