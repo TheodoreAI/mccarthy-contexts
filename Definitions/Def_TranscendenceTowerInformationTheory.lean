@@ -1,5 +1,6 @@
 /-
-Finite definitions for the platform-shaped information-theory result. The
+Finite definitions for the platform-shaped transcendence-tower
+information-theory result. The
 solution proves the logical classification and every nontrivial probabilistic
 claim from these explicit finite models.
 -/

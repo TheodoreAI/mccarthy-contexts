@@ -1,4 +1,4 @@
-import Definitions.Def_InformationTheory
+import Definitions.Def_TranscendenceTowerInformationTheory
 
 set_option autoImplicit false
 
