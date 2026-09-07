@@ -1,0 +1,3 @@
+value: Classify the actual minimal-block subtype and define Shannon quantities as explicit finite sums over the route/output joint mass; retain Real.binEntropy only as derived binary notation.
+reason: This makes the probability and entropy claims quantify over the formal model rather than labels or target formulas.
+decided_at: 2026-09-07T22:37:51+00:00

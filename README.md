@@ -16,9 +16,15 @@ Three further results show that the natural repairs are underdetermined.
 Minimizing change over valuations always returns the unrelaxed tower; over
 theories, circumscription admits incomparable minimal resolutions; and transfer
 between contexts is *route-sensitive*: a skeptical consequence of the direct
-route becomes merely credulous after passing through an intermediary.
+route becomes merely credulous after passing through an intermediary. A finite
+extension proves that its two routed blocks exhaust the actual minimal-block
+subtype, then imposes (rather than infers) a uniform policy on that subtype.
+The direct singleton has entropy `0`; routed selection has entropy `log 2`
+nats. The remaining Shannon quantities are derived from an explicit finite
+route/output joint law. Its separate loss-channel calculation assumes
+memoryless, fresh-stage composition for the distinguished fact.
 
-**21 results, no `sorry`.** Axiom use is confined to `propext`,
+**22 results, no `sorry`.** Axiom use is confined to `propext`,
 `Classical.choice` and `Quot.sound`; several results depend on no axioms at all.
 
 ## Building
@@ -45,10 +51,11 @@ verified in — Lean `v4.33.1`, Mathlib `0df444a3`.
 | `Definitions/` | shared definition bundles |
 | `Solutions/` | one `theorem solution` per result, in platform-submission form |
 
-`Development/` and `Definitions/`+`Solutions/` are **two presentations of the
-same results**. Several modules therefore declare the same names, and they
-compile independently but must not be imported into one module. This is why the
-libraries are built from globs rather than through root files.
+`Development/` supplies readable proof context and supporting lemmas;
+`Definitions/`+`Solutions/` supplies independently compiling, platform-shaped
+headline statements. Where both presentations cover a result they must not be
+imported together, since they can deliberately declare overlapping names. This
+is why the libraries are built from globs rather than through root files.
 
 Start reading at `Development/Tower.lean`.
 
@@ -64,6 +71,8 @@ Start reading at `Development/Tower.lean`.
 | `Development/Theories.lean` | contexts as theories: classical consequence is monotone, circumscriptive consequence is not | new |
 | `Development/Lifting.lean` | lifting transfers, is defeasible, and admits **incomparable minimal resolutions** | new |
 | `Development/Chaining.lean` | lifting is **route-sensitive**: a skeptical direct consequence becomes merely credulous via an intermediary | new |
+| `Development/InformationTheory.lean` | actual routed blocks are exactly `{p}` or `{q}`; direct Dirac entropy is `0`, routed entropy is `log 2` nats, and a four-cell joint law derives the route/output quantities | new |
+| `Definitions/Def_InformationTheory.lean` + `Solutions/Sol_information_theory_joint_law.lean` | platform-shaped five-part headline: exact routed-block classification and its uniform law; unique direct singleton entropy `0`; fair routed entropy `log 2`; explicit-joint-law normalization, survival `3/4`, conditional entropy, and mutual information; and fresh-stage loss-channel composition | new |
 
 ## Notes for the OSU COE cluster
 

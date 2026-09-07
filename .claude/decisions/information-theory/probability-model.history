@@ -1,0 +1,4 @@
+- decided_at: 2026-09-07T22:21:04+00:00
+  event: initial
+  value: Use an explicit binary probability policy over the two exhibited minimal blocking sets; do not equate nondeterminism with probability.
+  reason: Entropy requires a probability law, while MinBlock alone supplies only a set of admissible choices.

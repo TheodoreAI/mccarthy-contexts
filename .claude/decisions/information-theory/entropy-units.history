@@ -1,0 +1,4 @@
+- decided_at: 2026-09-07T22:21:04+00:00
+  event: initial
+  value: Measure entropy in nats using Mathlib Real.binEntropy; identify log 2 nats as one bit.
+  reason: The pinned Mathlib implementation uses natural logarithms and already proves binEntropy (1/2) = log 2.

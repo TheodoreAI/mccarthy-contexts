@@ -34,12 +34,13 @@
 \newcommand{\Lift}{\operatorname{Lift}}
 \newcommand{\True}{\mathit{True}}
 \newcommand{\CL}{\mathit{CL}}
+\newcommand{\binEntropy}{\operatorname{H}_{\mathrm{bin}}}
 
 \title{Harmless and Pointless\\[0.3em]
   \large Consistency, rigidity, and the indeterminacy of context transfer\\
   in McCarthy's formalization of context}
 \author{Mateo Estrada}
-\date{5 September 2026}
+\date{7 September 2026}
 
 \begin{document}
 \maketitle
@@ -60,8 +61,13 @@ nothing. Taking contexts to be theories rescues the phenomenon---dropping an
 assumption can create a conclusion---but the accompanying lifting rule is doubly
 underdetermined: circumscription admits incomparable minimal resolutions, and
 transfer is \emph{route-sensitive}: a skeptical consequence of the direct route
-becomes merely credulous after passing through an intermediary. All 21 results
-are machine-checked in Lean 4 and free of \texttt{sorry}. The development is available at
+becomes merely credulous after passing through an intermediary. A final finite
+extension proves that the two routed blocks exhaust the actual minimal-block
+subtype, imposes a uniform policy on that subtype, and derives Shannon
+quantities from an explicit joint law.  Direct selection has entropy $0$ while
+routed selection has entropy $\log 2$.  Its separate loss calculation uses a
+memoryless, fresh-stage channel model. All 22 results are machine-checked in
+Lean 4 and free of \texttt{sorry}. The development is available at
 \url{https://github.com/TheodoreAI/mccarthy-contexts} under an MIT license.
 \end{abstract}
 
@@ -342,6 +348,49 @@ deposits $c_2$'s own commitment into the destination alongside $p$. So
 \emph{specializes} composes as a relation between contexts while the transfer it
 licenses does not: the composite is not determined by its endpoints, and lifting
 cannot be chained freely to reach a distant context.
+
+% ===========================================================================
+\section{A finite information calculation}
+
+The formal proof first establishes that the two displayed routed blocks
+exhaust the actual subtype of minimal blocks: every such block is either
+``drop $p$'' or ``drop $q$''.  They are alternatives, not outcomes of a
+probability space.  To make a finite quantitative statement, we therefore
+\emph{add} a uniform law on that actual subtype.  Entropy applies only after
+imposing this policy; it is not an entropy of nondeterministic consequence or
+of the lifting relation by itself.
+
+\begin{theorem}[\prov{New}]\label{thm:information}
+The unique direct minimal block carries a singleton (Dirac) law and hence has
+entropy $0$.  Under the fair routed policy, routed selection has entropy
+$\log 2$ nats (one bit).  For a uniform prior on direct versus routed transfer,
+an explicit four-cell route/output joint law has survival marginal $3/4$,
+conditional output entropy $(\log 2)/2$, and mutual information
+\[
+  \binEntropy(3/4) - (\log 2)/2.
+\]
+These Shannon quantities are finite sums derived from that joint law.  In the
+separate abstract loss-only channel, if $0\leq s,t\leq1$, composing
+memoryless fresh-stage Markov kernels with survival probabilities $s$ and $t$
+gives the valid kernel with survival probability $st$; hence direct then
+routed survival is $1/2$, and two fresh fair routed stages have survival
+$1/4$.
+\end{theorem}
+\leanref{TranscendenceTower.InformationTheory.minblock\_routed\_iff;
+TranscendenceTower.InformationTheory.direct\_selection\_entropy;
+TranscendenceTower.InformationTheory.symmetric\_routed\_selection\_entropy;
+TranscendenceTower.InformationTheory.routeOutputJointMass\_is\_distribution;
+TranscendenceTower.InformationTheory.uniform\_route\_survival\_probability;
+TranscendenceTower.InformationTheory.uniform\_route\_conditional\_entropy;
+TranscendenceTower.InformationTheory.uniform\_route\_mutual\_information;
+TranscendenceTower.InformationTheory.fresh\_stage\_lossChannel\_compose;
+TranscendenceTower.InformationTheory.two\_routed\_fresh\_stages\_survival}
+
+Here ``nats'' records the natural-logarithm convention: $\log 2$ nats is one
+bit.  This is intentionally a finite calculation about the proved actual
+minimal-block subtype and its added policy.  It makes no coding-theorem claim,
+does not turn arbitrary nonmonotonic choices into probabilities, and does not
+infer multi-stage behavior from one-stage logical marginals.
 
 % ===========================================================================
 \section{What the three failures have in common}
