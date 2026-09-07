@@ -59,9 +59,9 @@ valuations is degenerate: the minimum always exists, is unique, and changes
 nothing. Taking contexts to be theories rescues the phenomenon---dropping an
 assumption can create a conclusion---but the accompanying lifting rule is doubly
 underdetermined: circumscription admits incomparable minimal resolutions, and
-transfer is \emph{route-dependent}, failing between compatible endpoints when
-passed through an intermediary. All 21 results are machine-checked in Lean 4 and
-free of \texttt{sorry}. The development is available at
+transfer is \emph{route-sensitive}: a skeptical consequence of the direct route
+becomes merely credulous after passing through an intermediary. All 21 results
+are machine-checked in Lean 4 and free of \texttt{sorry}. The development is available at
 \url{https://github.com/TheodoreAI/mccarthy-contexts} under an MIT license.
 \end{abstract}
 
@@ -127,9 +127,11 @@ earlier: each new atom is read off a valuation settled before the new language
 existed. No compactness argument is needed.
 
 \begin{corollary}[\prov{McCarthy}]
-For every ordinal $\alpha$, the tower extended to stage $\alpha$ is consistent.
+For every ordinal $\alpha$ and every assignment to the base atoms, the
+recursively induced compositional valuation satisfies the tower through
+stage $\alpha$.
 \end{corollary}
-\leanref{TranscendenceTower.Transfinite.Gamma\_satisfiable}
+\leanref{TranscendenceTower.Transfinite.Gamma\_satisfiable\_compositional}
 
 McCarthy raises transfinite iteration and sets it aside. The mathematics extends
 without new ideas, but the \emph{formalization} does not: limit stages must be
@@ -203,8 +205,9 @@ of Section~2 understates what the schema does, and the stronger statement
 explains both why the tower is safe and why it is uninteresting.
 
 \begin{theorem}[\prov{New}]\label{thm:categorical}
-$\Gamma$ is categorical over the base: any two contexts extending the same
-level-0 valuation and satisfying $\Gamma$ are equal.
+$\Gamma$ has a unique expansion over each fixed base valuation: any two
+contexts extending the same level-0 valuation and satisfying $\Gamma$ are
+equal.
 \end{theorem}
 \leanref{TranscendenceTower.Relaxation.schema\_unique}
 
@@ -327,10 +330,11 @@ contexts most needs a determinate answer.
 
 \begin{theorem}[\prov{New}]\label{thm:route}
 With $c_1 \vdash p$, $c_2 \vdash q$ and $c_3 \vdash \neg(p \wedge q)$: directly,
-$p$ transfers to $c_3$ determinately. Through $c_2$, two incomparable minimal
-resolutions appear and $p$ survives only one.
+$p$ is a consequence under every minimal resolution. Through $c_2$, two
+incomparable minimal resolutions appear and $p$ survives only one; it is
+therefore merely a credulous consequence of the routed transfer.
 \end{theorem}
-\leanref{TranscendenceTower.Chaining.lifting\_does\_not\_chain}
+\leanref{TranscendenceTower.Chaining.lifting\_is\_route\_sensitive}
 
 The endpoints do not conflict: $p$ and $\neg(p \wedge q)$ hold together. The
 indeterminacy is manufactured entirely by the route, because the first hop
@@ -403,7 +407,10 @@ This motivated a standing check applied to every result here: for any statement
 quantifying over models, prove the model class non-empty; for any hypothesis
 defined in-file, exhibit a witness. The transfinite development defines its own
 notion of limit ordinal, so it also proves that $\omega$ satisfies it---otherwise
-the limit-stage lemma would be quietly empty.
+the limit-stage lemma would be quietly empty. Its satisfiability theorem also
+names the recursively defined valuation in the statement itself; quantifying
+over an arbitrary function from formulas to Booleans would admit the
+constant-true function without enforcing the semantics of any connective.
 
 \paragraph{Naming what is not proved.}
 The second discipline is scope. Theorem~\ref{thm:one} is a statement about a

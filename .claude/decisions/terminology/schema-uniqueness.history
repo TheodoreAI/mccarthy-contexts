@@ -1,0 +1,4 @@
+- decided_at: 2026-09-07T22:05:00+00:00
+  event: initial
+  value: Describe schema_unique as unique expansion over a fixed base valuation, not categoricity.
+  reason: The theorem fixes a base valuation and proves equality of its extensions; model-theoretic categoricity is stronger.

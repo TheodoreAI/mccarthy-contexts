@@ -1,8 +1,8 @@
 /-
   Minimal change for relaxed transcendence contexts.
 
-  Earlier results establish that the transcendence schema is categorical over the
-  base (a context obeying it is uniquely determined), that any genuine
+  Earlier results establish that the transcendence schema has a unique expansion
+  over each fixed base valuation, that any genuine
   relaxation refutes the schema, and that dropping even one instance destroys
   uniqueness.  So a relaxed tower is underdetermined, and a *logic* of relaxing
   contexts must say which of the surviving contexts is intended.

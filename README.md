@@ -15,8 +15,8 @@ context relaxes an assumption of the old.
 Three further results show that the natural repairs are underdetermined.
 Minimizing change over valuations always returns the unrelaxed tower; over
 theories, circumscription admits incomparable minimal resolutions; and transfer
-between contexts is *route-dependent*, failing between compatible endpoints when
-passed through an intermediary.
+between contexts is *route-sensitive*: a skeptical consequence of the direct
+route becomes merely credulous after passing through an intermediary.
 
 **21 results, no `sorry`.** Axiom use is confined to `propext`,
 `Classical.choice` and `Quot.sound`; several results depend on no axioms at all.
@@ -57,13 +57,13 @@ Start reading at `Development/Tower.lean`.
 | module | result | |
 |---|---|---|
 | `Development/Tower.lean` | the transcendence tower is consistent | McCarthy §1, §5 |
-| `Development/Transfinite.lean` | consistent at every ordinal stage; limit stages are unions | |
+| `Development/Transfinite.lean` | the canonical compositional valuation satisfies the schema at every ordinal stage; limit stages are unions | |
 | `Development/Reification.lean` | reification is conservative; closure is not; distinct closure claims collide; relativization repairs it | |
-| `Development/Relaxation.lean` | the schema is **categorical**; relaxation refutes it; the relaxed schema is not definitional | new |
+| `Development/Relaxation.lean` | the schema has a **unique expansion over each fixed base valuation**; relaxation refutes it; the relaxed schema is not definitional | new |
 | `Development/MinimalChange.lean` | change sets parametrize exactly; **minimal change collapses** to the unrelaxed tower; naming the change set determines the context | new |
 | `Development/Theories.lean` | contexts as theories: classical consequence is monotone, circumscriptive consequence is not | new |
 | `Development/Lifting.lean` | lifting transfers, is defeasible, and admits **incomparable minimal resolutions** | new |
-| `Development/Chaining.lean` | lifting is **route-dependent**: a transfer succeeding directly can fail via an intermediary | new |
+| `Development/Chaining.lean` | lifting is **route-sensitive**: a skeptical direct consequence becomes merely credulous via an intermediary | new |
 
 ## Notes for the OSU COE cluster
 

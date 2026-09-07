@@ -216,20 +216,17 @@ theorem Gamma_subset_Lang (α : Ordinal) :
 
 /-! ## Corollary 1 -/
 
-/-- **Corollary 1.** For every ordinal `α`, the tower `Γ_α` -- the transcendence
-schema extended to stage `α` -- is satisfiable, hence consistent.
+/-- **Corollary 1.** For every ordinal `α` and every assignment to the base
+atoms, the recursively defined, compositional tower valuation satisfies
+`Γ_α`.
+
+The witness is constrained to be `val v0`, rather than an arbitrary function
+`TForm → Bool`; otherwise the constant-`true` function would make the statement
+hold without interpreting any connective correctly.
 
 This matches the generality McCarthy gestures at when he raises, and sets aside,
 continuing the transcendence process transfinitely. -/
-theorem Gamma_satisfiable (α : Ordinal) :
-    ∃ v : TForm → Bool, ∀ q ∈ Gamma α, v q = true := by
-  refine ⟨val (fun _ => false), ?_⟩
-  rintro q ⟨β, p, _, _, rfl⟩
-  exact val_schema _ β p
-
-/-- The stronger form: *every* choice of base assignment already works, so
-consistency does not depend on the valuation chosen for `P₀`. -/
-theorem Gamma_satisfiable_of_base (α : Ordinal) (v0 : Nat → Bool) :
+theorem Gamma_satisfiable_compositional (α : Ordinal) (v0 : Nat → Bool) :
     ∀ q ∈ Gamma α, val v0 q = true := by
   rintro q ⟨β, p, _, _, rfl⟩
   exact val_schema v0 β p
@@ -238,14 +235,13 @@ theorem Gamma_satisfiable_of_base (α : Ordinal) (v0 : Nat → Bool) :
 
 section Verification
 
-/-- Corollary 1 restated inline, with the schema unfolded. -/
-example : ∀ (α : Ordinal), ∃ v : TForm → Bool,
+/-- Corollary 1 restated inline, with the compositional evaluator explicit. -/
+example : ∀ (α : Ordinal) (v0 : Nat → Bool),
     ∀ (β : Ordinal) (p : TForm), β < α → InLang β p →
-      v (TForm.iff (TForm.ist β p) p) = true := by
-  intro α
-  refine ⟨val (fun _ => false), ?_⟩
+      val v0 (TForm.iff (TForm.ist β p) p) = true := by
+  intro α v0
   intro β p _ _
-  exact val_schema _ β p
+  exact val_schema v0 β p
 
 /-- The limit-stage union restated inline. -/
 example : ∀ (lam : Ordinal), IsLimitOrd lam → ∀ (p : TForm),
@@ -267,8 +263,7 @@ example : ∃ lam : Ordinal, IsLimitOrd lam ∧
 #print axioms val_schema
 #print axioms schema_mem
 #print axioms Gamma_subset_Lang
-#print axioms Gamma_satisfiable
-#print axioms Gamma_satisfiable_of_base
+#print axioms Gamma_satisfiable_compositional
 
 end Verification
 

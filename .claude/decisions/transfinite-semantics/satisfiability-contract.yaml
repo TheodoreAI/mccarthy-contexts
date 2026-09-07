@@ -1,0 +1,3 @@
+value: State Gamma satisfiability via the canonical recursive val evaluator over a base atom assignment, never as an unconstrained TForm-to-Bool function.
+reason: An arbitrary function admits the constant-true witness and does not express compositional semantics.
+decided_at: 2026-09-07T22:05:00+00:00

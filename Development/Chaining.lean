@@ -72,6 +72,22 @@ theorem minblock_direct : MinBlock srcP tgtNand ∅ :=
 theorem p_survives_direct : pA ∈ Cn (Lift srcP tgtNand ∅) :=
   subset_Cn' _ (Or.inr ⟨rfl, fun h => h⟩)
 
+/-- The direct route has no alternative minimal block: once the empty block is
+admissible, minimality forces every minimal block to equal it. -/
+theorem minblock_direct_unique {A : Set L0} (hA : MinBlock srcP tgtNand A) :
+    A = ∅ := by
+  apply Set.Subset.antisymm
+  · exact hA.2 ∅ admissible_direct (Set.empty_subset A)
+  · exact Set.empty_subset A
+
+/-- Consequently `p` survives under every minimal resolution of the direct
+route, not merely under the exhibited empty block. -/
+theorem p_survives_every_direct (A : Set L0)
+    (hA : MinBlock srcP tgtNand A) :
+    pA ∈ Cn (Lift srcP tgtNand A) := by
+  rw [minblock_direct_unique hA]
+  exact p_survives_direct
+
 /-! ## The route through the intermediate context does not -/
 
 /-- The first hop carries the intermediate context's own assertion along, so
@@ -144,42 +160,56 @@ theorem p_lost_via_mid : pA ∉ Cn (Lift srcPQ tgtNand {pA}) := by
       · rfl
   exact absurd (h vQ hm) (by decide)
 
+/- Giving up `q` instead preserves `p`, so the routed transfer supports `p`
+credulously but not skeptically across its minimal resolutions. -/
+theorem p_survives_via_mid : pA ∈ Cn (Lift srcPQ tgtNand {qA}) := by
+  apply subset_Cn' _
+  refine Or.inr ⟨Or.inl rfl, ?_⟩
+  intro hpq
+  have heq : pA = qA := hpq
+  injection heq with h0
+  exact absurd h0 (by decide)
+
 /-! ## Lifting is route-dependent -/
 
-/-- **Lifting does not chain.**
+/-- **Lifting is route-sensitive.**
 
-By the direct route, `p` transfers from `c₁` to `c₃` and does so determinately:
-the empty blocking set is minimal and `p` is a consequence of the result.
+By the direct route, `p` is a consequence under every minimal blocking set.
 
-By the route through `c₂` it does not.  The first hop carries `c₂`'s own
-assertion along, so `{p, q}` arrives at `c₃`; that conflicts, two incomparable
-minimal blocking sets appear, and in one of them `p` is lost.
+By the route through `c₂`, the first hop carries `c₂`'s own assertion along, so
+`{p, q}` arrives at `c₃`.  Under the two minimal resolutions, `p` survives one
+and is lost in the other: it changes from a skeptical consequence to a merely
+credulous one.
 
 The origin and destination are compatible throughout -- `p` and `¬(p ∧ q)` hold
 together.  The indeterminacy is created purely by passing through an
 intermediary, which is why this is a statement about *routes* and not about the
 endpoints. -/
-theorem lifting_does_not_chain :
-    (MinBlock srcP tgtNand ∅ ∧ pA ∈ Cn (Lift srcP tgtNand ∅))
+theorem lifting_is_route_sensitive :
+    (∀ A : Set L0, MinBlock srcP tgtNand A →
+      pA ∈ Cn (Lift srcP tgtNand A))
       ∧ Lift srcP midQ ∅ = srcPQ
-      ∧ MinBlock srcPQ tgtNand {pA}
-      ∧ MinBlock srcPQ tgtNand {qA}
-      ∧ pA ∉ Cn (Lift srcPQ tgtNand {pA}) :=
-  ⟨⟨minblock_direct, p_survives_direct⟩,
+      ∧ (∃ A : Set L0, MinBlock srcPQ tgtNand A
+          ∧ pA ∉ Cn (Lift srcPQ tgtNand A))
+      ∧ (∃ A : Set L0, MinBlock srcPQ tgtNand A
+          ∧ pA ∈ Cn (Lift srcPQ tgtNand A)) :=
+  ⟨p_survives_every_direct,
    lift_through_mid,
-   minblock_singleton' admissible_drop_p,
-   minblock_singleton' admissible_drop_q,
-   p_lost_via_mid⟩
+   ⟨{pA}, minblock_singleton' admissible_drop_p, p_lost_via_mid⟩,
+   ⟨{qA}, minblock_singleton' admissible_drop_q, p_survives_via_mid⟩⟩
 
 /-! ## Verification -/
 
 section Verification
 
 #print axioms minblock_direct
+#print axioms minblock_direct_unique
 #print axioms p_survives_direct
+#print axioms p_survives_every_direct
 #print axioms lift_through_mid
 #print axioms p_lost_via_mid
-#print axioms lifting_does_not_chain
+#print axioms p_survives_via_mid
+#print axioms lifting_is_route_sensitive
 
 end Verification
 
