@@ -44,14 +44,7 @@ namespace TranscendenceTower.Uniformity
 
 variable {A C : Type}
 
-/-! ## Negation, and two facts about consequence -/
-
-/-- Negation, in the `→`/`⊥` fragment. -/
-def Neg (p : CForm A C) : CForm A C := CForm.impl p CForm.fls
-
-@[simp] theorem eval_Neg (v : CVal A C) (p : CForm A C) :
-    eval v (Neg p) = !(eval v p) := by
-  simp [Neg, eval]
+/-! ## Two facts about consequence -/
 
 theorem Cn_mono {X Y : Set (CForm A C)} (h : X ⊆ Y) : Cn X ⊆ Cn Y :=
   fun _ hp v hv => hp v fun q hq => hv q (h hq)
@@ -69,7 +62,7 @@ theorem eval_base_congr {v w : CVal A C} (h : v.atom = w.atom) :
     ∀ p : CForm A C, IsBase p → eval v p = eval w p := by
   intro p
   induction p with
-  | atom a => intro _; simp [eval, h]
+  | lit a b => intro _; simp [eval, h]
   | fls => intro _; rfl
   | impl p q ihp ihq => intro hb; simp [eval, ihp hb.1, ihq hb.2]
   | ist c p _ => intro hb; exact hb.elim
@@ -92,7 +85,7 @@ structure Rule (A C : Type) where
 
 /-- The rules of `S` that fire against `X` given the candidate `E`. -/
 def fired (S : Set (Rule A C)) (E X : Set (CForm A C)) : Set (CForm A C) :=
-  {γ | ∃ r ∈ S, r.conseq = γ ∧ r.prereq ∈ X ∧ Neg r.justif ∉ E}
+  {γ | ∃ r ∈ S, r.conseq = γ ∧ r.prereq ∈ X ∧ neg r.justif ∉ E}
 
 /-- The stages of the Reiter construction, tested against a candidate `E`. -/
 def stage (T : Set (CForm A C)) (S : Set (Rule A C)) (E : Set (CForm A C)) :
@@ -123,7 +116,7 @@ structure LogAut (A C : Type) where
   /-- The two actions agree, in the sense of the substitution lemma. -/
   eval_form : ∀ (v : CVal A C) (p : CForm A C), eval v (form p) = eval (val v) p
   /-- The action is a homomorphism for negation. -/
-  form_neg : ∀ p : CForm A C, form (Neg p) = Neg (form p)
+  form_neg : ∀ p : CForm A C, form (neg p) = neg (form p)
 
 namespace LogAut
 
@@ -218,7 +211,7 @@ theorem fired_pre (hS : e.preRules S = S) (E X : Set (CForm A C)) :
   · rintro ⟨r, hr, rfl, hprereq, hjust⟩
     refine ⟨e.mapRule r, ?_, rfl, hprereq, ?_⟩
     · rw [← hS] at hr; exact hr
-    · have hj : e.form (Neg r.justif) ∉ E := hjust
+    · have hj : e.form (neg r.justif) ∉ E := hjust
       rw [e.form_neg] at hj
       simpa [mapRule] using hj
   · rintro ⟨r, hr, hconseq, hprereq, hjust⟩
@@ -230,20 +223,26 @@ theorem fired_pre (hS : e.preRules S = S) (E X : Set (CForm A C)) :
       rw [hconseq]; exact e.form.symm_apply_apply γ
     · show e.form (e.form.symm r.prereq) ∈ X
       rw [e.form.apply_symm_apply]; exact hprereq
-    · show Neg (e.form.symm r.justif) ∉ e.pre E
+    · show neg (e.form.symm r.justif) ∉ e.pre E
       rw [mem_pre, e.form_neg, e.form.apply_symm_apply]
       exact hjust
 
+/-- A base theory fixed pointwise is preserved as a closed theory.  This is
+the shift's situation; the trichotomy supplies the weaker hypothesis directly,
+since an atom permutation does not fix `T` formula by formula. -/
+theorem pre_Cn_eq_of_fixed (hT : ∀ p ∈ T, e.form p = p) : e.pre (Cn T) = Cn T := by
+  rw [← e.Cn_pre, e.pre_eq_of_fixed hT]
+
 /-- Each stage of the construction for `σ⁻¹(E)` is the preimage of the
 corresponding stage for `E`. -/
-theorem stage_pre (hT : ∀ p ∈ T, e.form p = p) (hS : e.preRules S = S)
+theorem stage_pre (hT : e.pre (Cn T) = Cn T) (hS : e.preRules S = S)
     (E : Set (CForm A C)) :
     ∀ i, stage T S (e.pre E) i = e.pre (stage T S E i) := by
   intro i
   induction i with
   | zero =>
     show Cn T = e.pre (Cn T)
-    rw [← e.Cn_pre, e.pre_eq_of_fixed hT]
+    exact hT.symm
   | succ i ih =>
     show Cn (stage T S (e.pre E) i) ∪ fired S (e.pre E) (stage T S (e.pre E) i)
         = e.pre (Cn (stage T S E i) ∪ fired S E (stage T S E i))
@@ -253,7 +252,7 @@ theorem stage_pre (hT : ∀ p ∈ T, e.form p = p) (hS : e.preRules S = S)
 and preserving the schema carries extensions to extensions.  Instantiated at
 the shift this is rigidity; instantiated at an atom permutation it is Step 1 of
 the trichotomy. -/
-theorem isExtension_pre (hT : ∀ p ∈ T, e.form p = p) (hS : e.preRules S = S)
+theorem isExtension_pre (hT : e.pre (Cn T) = Cn T) (hS : e.preRules S = S)
     {E : Set (CForm A C)} (hE : IsExtension T S E) :
     IsExtension T S (e.pre E) := by
   show e.pre E = ⋃ i, stage T S (e.pre E) i
@@ -274,23 +273,24 @@ variable (oc : C ≃ C)
 
 /-- The shift on formulas: relabel every context index by `oc`. -/
 def shift : CForm A C → CForm A C
-  | .atom a => .atom a
+  | .lit a b => .lit a b
   | .fls => .fls
   | .impl p q => .impl (shift p) (shift q)
   | .ist c p => .ist (oc c) (shift p)
 
-@[simp] theorem shift_neg (p : CForm A C) : shift oc (Neg p) = Neg (shift oc p) := rfl
+@[simp] theorem shift_neg (p : CForm A C) : shift oc (neg p) = neg (shift oc p) := by
+  cases p <;> rfl
 
 theorem shift_symm_shift (p : CForm A C) : shift oc.symm (shift oc p) = p := by
   induction p with
-  | atom a => rfl
+  | lit a b => rfl
   | fls => rfl
   | impl p q ihp ihq => simp [shift, ihp, ihq]
   | ist c p ih => simp [shift, ih]
 
 theorem shift_shift_symm (p : CForm A C) : shift oc (shift oc.symm p) = p := by
   induction p with
-  | atom a => rfl
+  | lit a b => rfl
   | fls => rfl
   | impl p q ihp ihq => simp [shift, ihp, ihq]
   | ist c p ih => simp [shift, ih]
@@ -306,7 +306,7 @@ def shiftEquiv : CForm A C ≃ CForm A C where
 theorem shift_base : ∀ p : CForm A C, IsBase p → shift oc p = p := by
   intro p
   induction p with
-  | atom a => intro _; rfl
+  | lit a b => intro _; rfl
   | fls => intro _; rfl
   | impl p q ihp ihq => intro hb; simp [shift, ihp hb.1, ihq hb.2]
   | ist c p _ => intro hb; exact hb.elim
@@ -319,16 +319,10 @@ def shiftVal (v : CVal A C) : CVal A C where
 theorem eval_shift (v : CVal A C) (p : CForm A C) :
     eval v (shift oc p) = eval (shiftVal oc v) p := by
   induction p with
-  | atom a => rfl
+  | lit a b => rfl
   | fls => rfl
   | impl p q ihp ihq => simp [eval, shift, ihp, ihq]
   | ist c p _ => rfl
-
-theorem cval_ext {v w : CVal A C} (ha : v.atom = w.atom) (hi : v.ist = w.ist) :
-    v = w := by
-  obtain ⟨a1, i1⟩ := v
-  obtain ⟨a2, i2⟩ := w
-  simp_all
 
 theorem shiftVal_symm_shiftVal (v : CVal A C) :
     shiftVal oc.symm (shiftVal oc v) = v := by
@@ -371,7 +365,8 @@ theorem rigidity
     (huniq : ∀ E', IsExtension T S E' → Consistent E' → E' = E) :
     (shiftAut (A := A) oc).pre E = E :=
   huniq _
-    (LogAut.isExtension_pre _ (fun p hp => shift_base oc p (hT p hp)) hS hE)
+    (LogAut.isExtension_pre _
+      (LogAut.pre_Cn_eq_of_fixed _ (fun p hp => shift_base oc p (hT p hp))) hS hE)
     (LogAut.consistent_pre _ hcon)
 
 /-- The corrected consequence: the right-hand side carries the shift.  This is
@@ -466,15 +461,16 @@ def Monotone (S : Set (Rule A C)) : Prop := ∀ r ∈ S, r.justif = CForm.tru
 
 /-- A consistent theory cannot contain `¬⊤`, so a monotone rule always fires. -/
 theorem neg_tru_not_mem {E : Set (CForm A C)} (h : Consistent E) :
-    Neg CForm.tru ∉ E := by
+    neg CForm.tru ∉ E := by
   obtain ⟨v, hv⟩ := h
   intro hmem
   have := hv _ hmem
-  simp [Neg, eval] at this
+  rw [eval_neg, eval_tru] at this
+  simp at this
 
 /-- For a monotone schema the stages do not depend on the candidate. -/
 theorem stage_monotone (hmono : Monotone S) {E : Set (CForm A C)}
-    (hE : Neg CForm.tru ∉ E) :
+    (hE : neg CForm.tru ∉ E) :
     ∀ i, stage T S E i = stage T S (∅ : Set (CForm A C)) i := by
   intro i
   induction i with

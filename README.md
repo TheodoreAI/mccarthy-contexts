@@ -51,7 +51,7 @@ supports are proved alongside it.  The link between the two — the data
 processing inequality — is **not** proved, so the converse is stated for an
 arbitrary information bound rather than instantiated at `n · log (5/4)`.
 
-**28 results, no `sorry`.** Axiom use is confined to `propext`,
+**29 results, no `sorry`.** Axiom use is confined to `propext`,
 `Classical.choice` and `Quot.sound`; several results depend on no axioms at all.
 
 ## Building
@@ -108,6 +108,7 @@ Start reading at `Development/Tower.lean`.
 | `Development/WeakConverse.lean` | the **weak converse**: `H(truth) ≤ B + h(Pe) + Pe·log M` given `I ≤ B`, and the uniform rate bound `(1−Pe)·log M ≤ B + h(Pe)`; `B` is a hypothesis, since joining it to the n-use bound needs the unproved data processing inequality | new |
 | `Development/Uniformity.lean` | the **monotone dichotomy**: a proposition-uniform monotone lifting schema over a context-free base theory is conservative, so uniformity and novelty are incompatible; proved semantically by composing valuations, which needs neither a proof calculus nor compactness, and with no frame at all | new |
 | `Development/Rigidity.lean` | **rigidity**: a context-uniform schema's unique consistent extension is shift-invariant, so every level of the tower carries the same content — read through the shift in general, literally on the base language; proved via a general transport lemma for logical automorphisms, which also supplies Step 1 of the trichotomy. Requires the frame map to be a bijection. Also: a monotone schema has at most one consistent extension, and the copy schema is a full instance | new |
+| `Development/Trichotomy.lean` | the **trichotomy**: over a symmetric base theory every schema is conservative, or fails to have exactly one consistent extension, or fails to be proposition-uniform. `Aut(L)` is realised concretely as `{0,1}^A ⋊ Sym(A)` acting on signed atoms; proposition-uniformity is shown to give invariance of the schema, the tautological theory to be symmetric, and the copy schema to occupy corner (C) — by the trichotomy, not by computation. The compactness step the paper flags does not arise | new |
 
 ## Notes for the OSU COE cluster
 

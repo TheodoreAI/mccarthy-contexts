@@ -18,6 +18,17 @@
 
   For monotone schemas the extension is `Cn (T ∪ Γ)` with `Γ` the set of
   consequents, so the Reiter fixed point does not appear either.
+
+  One departure in the syntax, which is forced by later work.  Atoms carry a
+  sign: `lit a b` is the atom `a` if `b` is `false` and its negation if `b` is
+  `true`.  Negation is then a sign flip on literals, so it is an involution
+  there, and the atom automorphisms of the paper's `Aut(L)` become genuine
+  bijections of formulas rather than bijections only up to logical
+  equivalence.  With `atom : A → CForm` instead, `¬¬a` and `a` are distinct
+  formulas, `Aut(L)` acts only on the Lindenbaum algebra, and the transport
+  argument the trichotomy needs does not typecheck.  Nothing in the present
+  file requires the change; it is made here so that one syntax serves all
+  three theorems.
 -/
 
 import Mathlib.Data.Set.Basic
@@ -29,12 +40,13 @@ namespace TranscendenceTower.Uniformity
 
 /-! ## The context language -/
 
-/-- Propositional formulas over atoms `A`, with a modality `ist c` for each
-context `c : C`.  Following the paper, `ist c φ` is an additional atom: the
-language is closed under the Boolean connectives and nothing constrains the
-modality. -/
+/-- Formulas over signed atoms `A`, with a modality `ist c` for each context
+`c : C`.  Following the paper, `ist c φ` is an additional atom: the language is
+closed under the Boolean connectives and nothing constrains the modality.
+
+`lit a false` is the atom `a`; `lit a true` is its negation. -/
 inductive CForm (A : Type) (C : Type) : Type where
-  | atom : A → CForm A C
+  | lit : A → Bool → CForm A C
   | fls : CForm A C
   | impl : CForm A C → CForm A C → CForm A C
   | ist : C → CForm A C → CForm A C
@@ -44,10 +56,30 @@ namespace CForm
 
 variable {A C : Type}
 
+/-- The positive literal on `a`. -/
+def atom (a : A) : CForm A C := .lit a false
+
 /-- Truth. -/
 def tru : CForm A C := .impl .fls .fls
 
 end CForm
+
+variable {A C : Type}
+
+/-- Negation.  On a literal it flips the sign, so it is an involution there;
+elsewhere it is the usual `p → ⊥`. -/
+def neg : CForm A C → CForm A C
+  | .lit a b => .lit a (!b)
+  | .fls => CForm.impl .fls .fls
+  | .impl p q => CForm.impl (.impl p q) .fls
+  | .ist c p => CForm.impl (.ist c p) .fls
+
+@[simp] theorem neg_lit (a : A) (b : Bool) :
+    neg (CForm.lit a b : CForm A C) = CForm.lit a (!b) := rfl
+
+@[simp] theorem neg_neg_lit (a : A) (b : Bool) :
+    neg (neg (CForm.lit a b : CForm A C)) = CForm.lit a b := by
+  simp
 
 /-- A valuation assigns a truth value to every atom and to every
 `ist`-formula; the connectives are then interpreted classically. -/
@@ -57,16 +89,32 @@ structure CVal (A C : Type) where
   /-- Truth values of the modal atoms. -/
   ist : C → CForm A C → Bool
 
-variable {A C : Type}
-
-/-- Classical evaluation. -/
+/-- Classical evaluation.  A literal is read off its sign. -/
 def eval (v : CVal A C) : CForm A C → Bool
-  | .atom a => v.atom a
+  | .lit a b => xor b (v.atom a)
   | .fls => false
   | .impl p q => !(eval v p) || eval v q
   | .ist c p => v.ist c p
 
 @[simp] theorem eval_tru (v : CVal A C) : eval v CForm.tru = true := rfl
+
+@[simp] theorem eval_lit (v : CVal A C) (a : A) (b : Bool) :
+    eval v (CForm.lit a b) = xor b (v.atom a) := rfl
+
+@[simp] theorem eval_neg (v : CVal A C) (p : CForm A C) :
+    eval v (neg p) = !(eval v p) := by
+  cases p with
+  | lit a b => cases b <;> simp [eval]
+  | fls => rfl
+  | impl p q => simp [neg, eval]
+  | ist c p => simp [neg, eval]
+
+/-- Two valuations agreeing on atoms and modal atoms are equal. -/
+theorem cval_ext {v w : CVal A C} (ha : v.atom = w.atom) (hi : v.ist = w.ist) :
+    v = w := by
+  obtain ⟨a1, i1⟩ := v
+  obtain ⟨a2, i2⟩ := w
+  simp_all
 
 /-- `v` satisfies every member of `T`. -/
 def Models (T : Set (CForm A C)) (v : CVal A C) : Prop :=
@@ -87,19 +135,27 @@ theorem subset_Cn (T : Set (CForm A C)) : T ⊆ Cn T :=
 /-- The base language: no context machinery.  This is the paper's `L` inside
 `L⁺`. -/
 def IsBase : CForm A C → Prop
-  | .atom _ => True
+  | .lit _ _ => True
   | .fls => True
   | .impl p q => IsBase p ∧ IsBase q
   | .ist _ _ => False
 
+theorem isBase_neg {p : CForm A C} (h : IsBase p) : IsBase (neg p) := by
+  cases p with
+  | lit a b => trivial
+  | fls => exact ⟨trivial, trivial⟩
+  | impl p q => exact ⟨h, trivial⟩
+  | ist c p => exact h.elim
+
 /-! ## Substitution
 
 Substitutions act on atoms and are extended homomorphically, acting inside
-the scope of `ist`.  This is the paper's proposition-uniformity apparatus. -/
+the scope of `ist`.  A negative literal is sent to the negation of the image
+of its atom.  This is the paper's proposition-uniformity apparatus. -/
 
 /-- Homomorphic extension of an atom substitution. -/
 def subst (s : A → CForm A C) : CForm A C → CForm A C
-  | .atom a => s a
+  | .lit a b => bif b then neg (s a) else s a
   | .fls => .fls
   | .impl p q => .impl (subst s p) (subst s q)
   | .ist c p => .ist c (subst s p)
@@ -116,7 +172,7 @@ evaluating the original against the pulled-back valuation. -/
 theorem eval_subst (v : CVal A C) (s : A → CForm A C) (p : CForm A C) :
     eval v (subst s p) = eval (pullback v s) p := by
   induction p with
-  | atom a => rfl
+  | lit a b => cases b <;> simp [subst, eval, pullback]
   | fls => rfl
   | impl p q ihp ihq => simp [eval, subst, ihp, ihq]
   | ist c p _ => rfl
@@ -142,9 +198,9 @@ theorem eval_boolSubst (M v : CVal A C) :
     ∀ p : CForm A C, IsBase p → eval v (subst (boolSubst M) p) = eval M p := by
   intro p
   induction p with
-  | atom a =>
+  | lit a b =>
     intro _
-    cases h : M.atom a <;> simp [subst, boolSubst, h, eval]
+    cases h : M.atom a <;> cases b <;> simp [subst, boolSubst, h, eval]
   | fls => intro _; rfl
   | impl p q ihp ihq =>
     intro hb
@@ -220,7 +276,7 @@ theorem copySchema_propUniform : PropUniform (copySchema A C) := by
 
 /-- The canonical evaluation in which `ist c p` says exactly what `p` says. -/
 def canon (atomv : A → Bool) : CForm A C → Bool
-  | .atom a => atomv a
+  | .lit a b => xor b (atomv a)
   | .fls => false
   | .impl p q => !(canon atomv p) || canon atomv q
   | .ist _ p => canon atomv p
@@ -233,7 +289,7 @@ def canonVal (atomv : A → Bool) : CVal A C where
 theorem eval_canonVal (atomv : A → Bool) (p : CForm A C) :
     eval (canonVal atomv) p = canon atomv p := by
   induction p with
-  | atom a => rfl
+  | lit a b => rfl
   | fls => rfl
   | impl p q ihp ihq => simp [eval, canon, ihp, ihq]
   | ist c p _ => rfl

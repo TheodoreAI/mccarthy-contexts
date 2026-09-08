@@ -1,0 +1,4 @@
+- decided_at: '2026-09-08T11:00:00+00:00'
+  event: initial
+  value: Do not formalize the compactness argument the paper places at the end of Step 2; take the single automorphism carrying the counter-model to the model already in hand.
+  reason: The paper collects the orbit {g phi}, argues T union that orbit is unsatisfiable, and invokes compactness to reach inconsistency. With a semantic Cn there is nothing to convert: a theory with no model is inconsistent by definition. Moreover the orbit is unnecessary. The extension is consistent, so it has a model v; the extension contains Cn T, so v models T; symmetry supplies one g carrying the counter-model M onto v; invariance puts g phi in the extension while symmetry makes it false at v. So the infinite index set does no work at all, and the paper's remark that this is the only place it does should be withdrawn.
