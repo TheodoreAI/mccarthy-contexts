@@ -2,3 +2,7 @@
   event: initial
   value: Pursue the converse (Fano plus single-letterization) and treat achievability as a separate project that is not funded until the operational scenario is settled.
   reason: The converse is an impossibility result - no scheme recovers more than log(5/4) nats per use about the route - which is the shape of claim the paper actually makes. Achievability would restate a classical Z-channel result at high formalization cost and sits awkwardly against the paper's thesis. Achievability also presupposes that someone chooses route sequences to encode messages, which is an interpretive claim about context lifting that has not been established.
+- decided_at: '2026-09-08T01:10:00+00:00'
+  event: superseded
+  value: 'Prove the converse (Fano plus single-letterization). Achievability is RETIRED, not merely deferred: under the auditability framing nobody designs codes, so there is no one for an achievability statement to be about.'
+  reason: 'The earlier entry deferred achievability pending an operational account of who sends messages by choosing routes. That question is now settled by the auditability framing, and its answer is that there is no sender in the required sense. The converse is unaffected and in fact strengthened: an impossibility result about passive observation is a cleaner claim than one about hypothetical code designers.'

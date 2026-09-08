@@ -30,10 +30,20 @@ quantity has exact capacity `log (5 / 4)` and unique optimizer `q = 2 / 5`;
 because the input alphabet has exactly two routes, this `q`-family uniquely
 parametrizes every input probability distribution.
 Its coordinatewise product law is proved normalized for every fixed finite
-input word; this supplies the memoryless channel model before coding, not a
-coding theorem.
+input word; this supplies the memoryless channel model an asymptotic statement
+would presuppose, not a coding theorem.
 
-**23 results, no `sorry`.** Axiom use is confined to `propext`,
+These quantities are read as *auditing*, not as data transmission: the input is
+the system's own nondeterministic resolution of a lifting conflict, the output
+is which facts an observer sees survive, and the maximum bounds how much of the
+internal reasoning is recoverable from the external record.  On that reading the
+sharper result is negative — the **zero-error capacity is `0`**.  Both routes
+admit survival, so the all-survive word has positive probability under every
+input word, and no decoder that is never wrong can separate two codewords at any
+blocklength.  The resolution leaves a trace in what survives; that trace never
+amounts to proof.
+
+**24 results, no `sorry`.** Axiom use is confined to `propext`,
 `Classical.choice` and `Quot.sound`; several results depend on no axioms at all.
 
 ## Building
@@ -83,6 +93,8 @@ Start reading at `Development/Tower.lean`.
 | `Development/InformationTheory.lean` | actual routed blocks are exactly `{p}` or `{q}`; direct Dirac entropy is `0`, routed entropy is `log 2` nats, every route-input distribution is uniquely parameterized by `q`, and the resulting formal finite-sum mutual information equals its entropy closed form and has capacity `log (5 / 4)` nats uniquely at `q = 2 / 5`; normalized product channels model repeated uses | new |
 | `Definitions/Def_TranscendenceTowerInformationTheory.lean` + `Solutions/Sol_information_theory_joint_law.lean` | platform-shaped five-part headline: exact routed-block classification and its uniform law; unique direct singleton entropy `0`; fair routed entropy `log 2`; explicit-joint-law normalization, survival `3/4`, conditional entropy, and mutual information; and fresh-stage loss-channel composition | new |
 | `Definitions/Def_TranscendenceTowerChannelCapacity.lean` + `Solutions/Sol_information_theory_channel_capacity.lean` | platform-shaped capacity extension: exhaustive unique parameterization of route priors, the induced joint law, its finite-sum mutual information's equivalence to the entropy closed form, exact one-use capacity `log (5 / 4)` uniquely at `q = 2 / 5`, and a normalized memoryless product channel for each fixed input word | new |
+| `Development/ZeroErrorCapacity.lean` | the **zero-error capacity is `0`**: the all-survive word has positive probability under every input word, so no never-wrong decoder separates two codewords at any blocklength, and every zero-error code has rate `0`; a one-message code is exhibited so the bound is attained | new |
+| `Development/FiniteInformation.lean` | supporting infrastructure, not a paper result: discrete entropy, joint and conditional entropy, and mutual information over arbitrary `Fintype`s — absent from Mathlib — with marginals, the chain rule, `I = H(a) + H(b) - H(a,b)`, Gibbs' inequality `I ≥ 0`, subadditivity, `H(b∣a) ≥ 0`, and `I = H(b) - H(b∣a)` hence `I ≤ H(b)` | new |
 
 ## Notes for the OSU COE cluster
 

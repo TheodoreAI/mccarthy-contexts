@@ -443,8 +443,55 @@ TranscendenceTower.InformationTheory.blockChannel\_zero;
 TranscendenceTower.InformationTheory.blockChannel\_one}
 
 The product normalization establishes precisely the memoryless finite channel
-required before introducing codes.  It neither constructs an encoder or
-decoder nor proves an achievability, converse, or asymptotic coding theorem.
+that any asymptotic statement would presuppose.  It constructs no encoder or
+decoder and proves no achievability, converse, or asymptotic coding theorem.
+
+\subsection{The auditor's reading, and the failure of certainty}
+
+The quantities above are not claims about transmitting data.  Nothing in the
+formalization chooses routes in order to convey a message, and supplying such
+a chooser would be an interpretive overreach.  The reading intended here is
+instead \emph{auditing}.  The input is the system's own nondeterministic
+resolution of a lifting conflict; the output is what an observer sees, namely
+which facts survived.  Mutual information then measures how much of the
+internal reasoning is recoverable from the external record, and the maximum of
+Theorem~\ref{thm:capacity} is an upper bound on that recoverability, taken over
+how often the routed transfer is used.
+
+On this reading the sharper question is not how much is recoverable on average,
+but whether anything is recoverable \emph{with certainty}.  It is not.
+
+\begin{theorem}[\prov{New}]\label{thm:zeroerror}
+Let a code of length $n$ carrying $M$ messages consist of an encoder
+$e:\{1,\dots,M\}\to\{\mathsf{direct},\mathsf{viaMid}\}^{n}$ together with a
+decoder $d:\{\mathsf{false},\mathsf{true}\}^{n}\to\{1,\dots,M\}$ that is
+correct on every output word
+of positive probability, that is, $d(y)=m$ whenever $K_n(e(m),y)>0$.  Then
+$M\leq 1$, for every $n$.  Consequently every such code has rate
+$\log M/n=0$, so the zero-error capacity of the channel is $0$, while the
+one-use maximum of Theorem~\ref{thm:capacity} is strictly positive.  A
+one-message code exists, so the bound is attained rather than vacuous.
+\end{theorem}
+\leanref{TranscendenceTower.InformationTheory.allSurvive\_possible;
+TranscendenceTower.InformationTheory.zeroErrorCode\_subsingleton;
+TranscendenceTower.InformationTheory.zeroErrorCode\_rate\_zero;
+TranscendenceTower.InformationTheory.trivialZeroErrorCode;
+TranscendenceTower.InformationTheory.zero\_error\_capacity\_zero\_lt\_shannon\_capacity}
+
+The argument is finite and uses no asymptotics.  Both routes admit survival, so
+the all-survive word $y=(\mathsf{true},\dots,\mathsf{true})$ has positive
+probability under \emph{every} input word.  A decoder that is never wrong must
+therefore return the same message for every codeword, which leaves room for only
+one.  No observation rules any resolution out.
+
+The two results together are the point of this section.  A positive one-use
+maximum means the resolution leaves a trace in what survives; a zero-error
+capacity of $0$ means that trace never amounts to proof.  Whether an auditor
+observing many transfers can drive confidence arbitrarily close to certainty is
+an achievability question; it is not addressed here, and under the auditing
+reading there is no code designer for such a statement to be about.  What is
+established is the limitative half: the distinctions this machinery draws are
+real, bounded above, and never conclusively recoverable from what it outputs.
 
 % ===========================================================================
 \section{What the three failures have in common}
