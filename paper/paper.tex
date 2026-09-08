@@ -22,8 +22,14 @@
 % Every result carries its provenance, because the three kinds differ in what
 % they can be held to.  See the legend in Section 1.
 \newcommand{\prov}[1]{\textnormal{\footnotesize\textsc{#1}}}
+% Long unbreakable identifiers appear inline in the prose; allow TeX a little
+% extra stretch as a last resort rather than letting a line run into the margin.
+\emergencystretch=3em
+
+% Lean names are long and unbreakable; set them ragged right so a name that
+% does not fit ends the line short instead of running into the margin.
 \newcommand{\leanref}[1]{%
-  \par\smallskip\noindent{\footnotesize\ttfamily #1}\par}
+  \par\smallskip\noindent{\footnotesize\ttfamily\raggedright #1\par}}
 
 % ---- notation -------------------------------------------------------------
 \newcommand{\ist}{\mathit{ist}}
@@ -581,7 +587,7 @@ converse is developed and achievability is not.
 
 \medskip
 \noindent\emph{What is not established.}  The chain from
-Theorem~\ref{thm:nuse} to a rate statement about the route/survival channel is
+Theorem~\ref{thm:nuse} to a rate statement about the route\slash survival channel is
 not closed.  Theorem~\ref{thm:nuse} bounds $I(X^{n};Y^{n})$, whereas
 Theorem~\ref{thm:fano} bounds a quantity of the form $I(\text{guess};
 \text{truth})$; joining them requires the data processing inequality, since the
