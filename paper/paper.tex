@@ -493,6 +493,104 @@ reading there is no code designer for such a statement to be about.  What is
 established is the limitative half: the distinctions this machinery draws are
 real, bounded above, and never conclusively recoverable from what it outputs.
 
+\subsection{What repeated observation cannot buy}
+
+Theorem~\ref{thm:capacity} bounds what one transfer reveals and
+Theorem~\ref{thm:zeroerror} rules out certainty at any length, but neither
+excludes the obvious remaining strategy: watch many transfers and combine the
+observations cleverly, hoping the aggregate beats the per-transfer limit.  It
+does not.
+
+Saying so requires Shannon's finite quantities over arbitrary alphabets rather
+than over the two-element route alphabet, since the claim concerns words
+$X^{n}$ and $Y^{n}$.  Mathlib supplies the binary entropy function and a
+measure-theoretic Kullback--Leibler divergence, but no discrete entropy,
+conditional entropy or mutual information, so these were developed from the
+definitions over any finite types: entropy $H$, conditional entropy
+$H(\beta\mid\alpha)$ and mutual information $I(\alpha;\beta)$ as guarded finite
+sums in nats, together with the chain rule
+$H(\alpha,\beta)=H(\alpha)+H(\beta\mid\alpha)$, the identity
+$I=H(\alpha)+H(\beta)-H(\alpha,\beta)$, Gibbs' inequality $I\geq0$,
+subadditivity, and the maximum-entropy bound $H(p)\leq\log\lvert\alpha\rvert$.
+The mathematics of this subsection is classical; what is contributed is a
+machine-checked development of it in the guarded-sum form these definitions
+actually take, and its application here.
+
+\begin{theorem}[\prov{Classical}]\label{thm:nuse}
+Let $K$ be the route/survival channel, $K_{n}$ its $n$-fold product, and
+$\mathrm{pr}$ \emph{any} probability distribution on input words
+$x:\mathrm{Fin}\,n\to\{\mathsf{direct},\mathsf{viaMid}\}$ --- not necessarily a
+product distribution.  Let $J$ be the induced joint law on input and output
+words.  Then
+\[
+  I(X^{n};Y^{n})\;\leq\;\sum_{i}\bigl[H(Y_{i})-H(Y_{i}\mid X_{i})\bigr].
+\]
+\end{theorem}
+\leanref{TranscendenceTower.FiniteInformation.entropy\_le\_sum\_coordMarginal;
+TranscendenceTower.FiniteInformation.entropy\_productLaw;
+TranscendenceTower.FiniteInformation.condEntropy\_channelJoint\_coord;
+TranscendenceTower.FiniteInformation.mutualInfo\_channelJoint\_le}
+
+The proof has two halves.  The output word law satisfies the independence
+bound $H(Y^{n})\leq\sum_{i}H(Y_{i})$, proved by an induction that peels the
+last coordinate off a word and applies ordinary two-variable subadditivity at
+each step.  Memorylessness supplies the other half exactly: $H(Y^{n}\mid
+X^{n})$ is the prior-average of the summed per-coordinate row entropies, which
+reindexes to $\sum_{i}H(Y_{i}\mid X_{i})$.
+
+That the prior is arbitrary is the point.  Correlating the resolutions across
+transfers is permitted and does not help; bounding each bracket by
+Theorem~\ref{thm:capacity} gives $I(X^{n};Y^{n})\leq n\log(5/4)$.  There is no
+accumulation strategy, however ingenious, that beats the one-use rate.
+
+The complementary half concerns the auditor rather than the channel.
+
+\begin{theorem}[\prov{Classical}]\label{thm:fano}
+Let $J$ be a joint law on (guess, truth) over an alphabet of size $M$, with
+error probability $P_{e}$, and let $h$ denote binary entropy.  Then
+\[
+  H(\text{truth}\mid\text{guess})\;\leq\;h(P_{e})+P_{e}\log M .
+\]
+Consequently, if the information the guess carries about the truth is at most
+$B$, then $H(\text{truth})\leq B+h(P_{e})+P_{e}\log M$; and when the truth is
+uniform over $M$ possibilities,
+\[
+  (1-P_{e})\log M\;\leq\;B+h(P_{e}).
+\]
+\end{theorem}
+\leanref{TranscendenceTower.FiniteInformation.fano;
+TranscendenceTower.FiniteInformation.weak\_converse;
+TranscendenceTower.FiniteInformation.weak\_converse\_uniform;
+TranscendenceTower.FiniteInformation.recoverable\_entropy\_le}
+
+This is Fano's inequality and the weak converse it supports.  The constant is
+$\log M$ rather than the textbook $\log(M-1)$, which is deliberate: the weaker
+form lets the comparison law used in the proof be a sub-probability rather than
+a probability, eliminating all counting of the off-diagonal, and it is what a
+weak converse needs.  The bound $B$ is carried as a hypothesis rather than
+fixed, so the converse is independent of any particular channel.
+
+Read under the auditing interpretation, the two theorems divide as the framing
+predicts.  Theorem~\ref{thm:nuse} needs no agent at all; it is a fact about the
+channel.  Theorem~\ref{thm:fano} needs a receiver but not a sender: the auditor
+guesses the resolution history from what survived, and $P_{e}$ is the
+probability that reconstruction is wrong.  An achievability statement, by
+contrast, would need someone choosing inputs to encode a message, which is
+precisely the role the auditing reading denies exists.  This is why the
+converse is developed and achievability is not.
+
+\medskip
+\noindent\emph{What is not established.}  The chain from
+Theorem~\ref{thm:nuse} to a rate statement about the route/survival channel is
+not closed.  Theorem~\ref{thm:nuse} bounds $I(X^{n};Y^{n})$, whereas
+Theorem~\ref{thm:fano} bounds a quantity of the form $I(\text{guess};
+\text{truth})$; joining them requires the data processing inequality, since the
+auditor's guess is a function of the observation, and that inequality is not
+proved here.  Both theorems hold as stated, and the second is stated for an
+arbitrary bound $B$, but the instantiation $B=n\log(5/4)$ for this channel
+awaits that step.  Stating the converse in a form where the two alphabets
+happened to coincide would have concealed the gap rather than closed it.
+
 % ===========================================================================
 \section{What the three failures have in common}
 
@@ -572,6 +670,17 @@ terms---would not falsify Theorem~\ref{thm:one}; it would produce a different
 system to which the theorem does not apply. Since stratification is what the
 proof rests on, that extension is also the one most likely to break it, and it
 should be attempted deliberately rather than by accident.
+
+The same discipline applies to Section~8.  Theorem~\ref{thm:nuse} and
+Theorem~\ref{thm:fano} are each proved as stated, but they are not yet joined:
+the first bounds $I(X^{n};Y^{n})$ and the second a quantity of the form
+$I(\text{guess};\text{truth})$, and the data processing inequality that links
+them is not proved.  The converse is therefore stated for an arbitrary bound
+$B$ rather than for $B=n\log(5/4)$.  It would have been easy to state it in a
+form where the two alphabets coincided, which would have removed the visible
+gap without removing the mathematical one; a weaker theorem presented as the
+intended one is the same failure as a vacuous theorem that compiles, and is
+harder to notice.
 
 \paragraph{Disclosure: AI assistance.}
 The Lean development and the text of this paper were produced with Claude

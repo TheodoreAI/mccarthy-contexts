@@ -43,7 +43,15 @@ input word, and no decoder that is never wrong can separate two codewords at any
 blocklength.  The resolution leaves a trace in what survives; that trace never
 amounts to proof.
 
-**24 results, no `sorry`.** Axiom use is confined to `propext`,
+Repeated observation buys nothing either.  For *any* prior on input words,
+correlated across transfers or not, `I(Xⁿ;Yⁿ) ≤ Σᵢ [H(Yᵢ) − H(Yᵢ|Xᵢ)]`, so
+bounding each bracket gives `n · log (5/4)`: there is no accumulation strategy
+that beats the one-use rate.  Fano's inequality and the weak converse it
+supports are proved alongside it.  The link between the two — the data
+processing inequality — is **not** proved, so the converse is stated for an
+arbitrary information bound rather than instantiated at `n · log (5/4)`.
+
+**26 results, no `sorry`.** Axiom use is confined to `propext`,
 `Classical.choice` and `Quot.sound`; several results depend on no axioms at all.
 
 ## Building
@@ -94,7 +102,10 @@ Start reading at `Development/Tower.lean`.
 | `Definitions/Def_TranscendenceTowerInformationTheory.lean` + `Solutions/Sol_information_theory_joint_law.lean` | platform-shaped five-part headline: exact routed-block classification and its uniform law; unique direct singleton entropy `0`; fair routed entropy `log 2`; explicit-joint-law normalization, survival `3/4`, conditional entropy, and mutual information; and fresh-stage loss-channel composition | new |
 | `Definitions/Def_TranscendenceTowerChannelCapacity.lean` + `Solutions/Sol_information_theory_channel_capacity.lean` | platform-shaped capacity extension: exhaustive unique parameterization of route priors, the induced joint law, its finite-sum mutual information's equivalence to the entropy closed form, exact one-use capacity `log (5 / 4)` uniquely at `q = 2 / 5`, and a normalized memoryless product channel for each fixed input word | new |
 | `Development/ZeroErrorCapacity.lean` | the **zero-error capacity is `0`**: the all-survive word has positive probability under every input word, so no never-wrong decoder separates two codewords at any blocklength, and every zero-error code has rate `0`; a one-message code is exhibited so the bound is attained | new |
-| `Development/FiniteInformation.lean` | supporting infrastructure, not a paper result: discrete entropy, joint and conditional entropy, and mutual information over arbitrary `Fintype`s — absent from Mathlib — with marginals, the chain rule, `I = H(a) + H(b) - H(a,b)`, Gibbs' inequality `I ≥ 0`, subadditivity, `H(b∣a) ≥ 0`, and `I = H(b) - H(b∣a)` hence `I ≤ H(b)` | new |
+| `Development/FiniteInformation.lean` | supporting infrastructure, not a paper result: discrete entropy, joint and conditional entropy, and mutual information over arbitrary `Fintype`s — absent from Mathlib — with marginals, the chain rule, `I = H(a) + H(b) - H(a,b)`, Gibbs' inequality `I ≥ 0`, subadditivity, `H(b∣a) ≥ 0`, `I = H(b) - H(b∣a)` hence `I ≤ H(b)`, entropy additivity on independent laws, and maximum entropy `H(p) ≤ log ‖a‖` | new |
+| `Development/FiniteInformationProduct.lean` | the independence bound `H(Y₁…Yₙ) ≤ Σ H(Yᵢ)` by an induction peeling the last coordinate; entropy additivity across coordinates of a product law (memorylessness); the input/output joint law of a prior and a memoryless channel; and the **n-use bound** `I(Xⁿ;Yⁿ) ≤ Σᵢ [H(Yᵢ) − H(Yᵢ∣Xᵢ)]` for an arbitrary, possibly correlated input prior | new |
+| `Development/Fano.lean` | **Fano's inequality** `H(truth∣guess) ≤ h(Pe) + Pe·log M`, with the constant `log M` rather than `log (M−1)` so the comparison law can be a sub-probability and no off-diagonal counting is needed | new |
+| `Development/WeakConverse.lean` | the **weak converse**: `H(truth) ≤ B + h(Pe) + Pe·log M` given `I ≤ B`, and the uniform rate bound `(1−Pe)·log M ≤ B + h(Pe)`; `B` is a hypothesis, since joining it to the n-use bound needs the unproved data processing inequality | new |
 
 ## Notes for the OSU COE cluster
 
