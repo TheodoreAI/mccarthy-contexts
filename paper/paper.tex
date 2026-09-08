@@ -66,8 +66,12 @@ extension proves that the two routed blocks exhaust the actual minimal-block
 subtype, imposes a uniform policy on that subtype, and derives Shannon
 quantities from an explicit joint law.  Direct selection has entropy $0$ while
 routed selection has entropy $\log 2$.  Its separate loss calculation uses a
-memoryless, fresh-stage channel model. All 22 results are machine-checked in
-Lean 4 and free of \texttt{sorry}. The development is available at
+memoryless, fresh-stage channel model.  The finite-sum mutual information of
+its parameterized joint law equals the entropy closed form and has exact
+one-use capacity $\log(5/4)$ nats, uniquely at routed-input probability $2/5$;
+its finite memoryless product channel is normalized before any coding question
+is posed.  All 23 results are machine-checked in Lean 4 and free of
+\texttt{sorry}. The development is available at
 \url{https://github.com/TheodoreAI/mccarthy-contexts} under an MIT license.
 \end{abstract}
 
@@ -391,6 +395,56 @@ bit.  This is intentionally a finite calculation about the proved actual
 minimal-block subtype and its added policy.  It makes no coding-theorem claim,
 does not turn arbitrary nonmonotonic choices into probabilities, and does not
 infer multi-stage behavior from one-stage logical marginals.
+
+\subsection{Capacity and memoryless repeated use}
+
+Let $q\in[0,1]$ be the probability of choosing the routed input, so the direct
+input has probability $1-q$.  Since the route alphabet has exactly two
+elements, every input probability distribution is uniquely of this form.
+Write $J_q$ for the resulting route/output joint law, $p_q$ for its route
+prior, and $m_q$ for its output marginal.  The
+formal finite-sum mutual information, with zero-mass cells contributing zero,
+is proved equal to the entropy closed form:
+\[
+  I_{\mathrm{joint}}(q)
+  =\sum_{r,b:J_q(r,b)\ne0}J_q(r,b)
+    \log\frac{J_q(r,b)}{p_q(r)m_q(b)}
+  =\binEntropy(q/2)-q\log 2.
+\]
+The proof evaluates $q=0$ and $q=1$ separately and uses nonzero denominators
+only in the interior $0<q<1$.
+
+\begin{theorem}[\prov{New}]\label{thm:capacity}
+For every $q\in[0,1]$,
+\[
+  I_{\mathrm{joint}}(q)\leq\log(5/4),
+  \qquad
+  I_{\mathrm{joint}}(q)=\log(5/4)\ \Longleftrightarrow\ q=2/5.
+\]
+In particular, $I_{\mathrm{joint}}(2/5)=\log(5/4)$, so the channel capacity is
+$\log(5/4)$ nats and the optimizing routed-input probability is unique.
+For every input word $x:\mathrm{Fin}\ n\to\{\mathsf{direct},\mathsf{viaMid}\}$,
+the repeated-use channel
+\[
+  K_n(x,y)=\prod_{i:\mathrm{Fin}\ n}K(x_i,y_i)
+\]
+is a nonnegative normalized mass function over output words
+$y:\mathrm{Fin}\ n\to\{\mathsf{false},\mathsf{true}\}$.  The cases $n=0$ and
+$n=1$ are respectively the unit mass on the empty word and the original
+one-use channel.
+\end{theorem}
+\leanref{TranscendenceTower.InformationTheory.routePrior\_eq\_routedInputPrior;
+TranscendenceTower.InformationTheory.oneUseJointMutualInformation\_eq\_closed\_form;
+TranscendenceTower.InformationTheory.oneUseJointMutualInformation\_at\_two\_fifths;
+TranscendenceTower.InformationTheory.oneUseJointMutualInformation\_capacity;
+TranscendenceTower.InformationTheory.oneUseJointMutualInformation\_eq\_capacity\_iff;
+TranscendenceTower.InformationTheory.blockChannel\_is\_distribution;
+TranscendenceTower.InformationTheory.blockChannel\_zero;
+TranscendenceTower.InformationTheory.blockChannel\_one}
+
+The product normalization establishes precisely the memoryless finite channel
+required before introducing codes.  It neither constructs an encoder or
+decoder nor proves an achievability, converse, or asymptotic coding theorem.
 
 % ===========================================================================
 \section{What the three failures have in common}

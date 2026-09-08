@@ -1,0 +1,4 @@
+- decided_at: 2026-09-07T23:22:15+00:00
+  event: initial
+  value: Define one-use mutual information as finiteMutualInformation of the parameterized joint law and prove its endpoint-aware equivalence to the entropy closed form before optimizing it.
+  reason: The capacity claim must certify the project formal finite-sum definition, including zero-mass endpoint branches.

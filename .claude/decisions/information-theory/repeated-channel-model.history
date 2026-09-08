@@ -1,0 +1,4 @@
+- decided_at: 2026-09-07T23:03:32+00:00
+  event: initial
+  value: Define n independent uses as the product channel mass over Fin n coordinates and prove every fixed-input output law is normalized.
+  reason: A memoryless product channel is the prerequisite for later block codes and a coding theorem.

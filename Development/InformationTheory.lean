@@ -619,6 +619,306 @@ theorem two_routed_fresh_stages_survival :
         exact congrFun (congrFun hkernel.1 true) true]
   norm_num [lossChannel]
 
+/-! ## Capacity and memoryless repeated use -/
+
+/-- The input prior for one use.  Here `q` is the probability of selecting
+the routed input, while `1 - q` is the probability of selecting direct
+transfer. -/
+def routedInputPrior (q : ℝ) : Route → ℝ
+  | .direct => 1 - q
+  | .viaMid => q
+
+theorem routedInputPrior_is_distribution {q : ℝ} (hq0 : 0 ≤ q) (hq1 : q ≤ 1) :
+    IsFiniteDistribution (routedInputPrior q) := by
+  constructor
+  · intro route
+    cases route <;> simp [routedInputPrior] <;> linarith
+  · rw [sum_routes]
+    simp [routedInputPrior]
+
+/-- Every probability distribution on the two-element route alphabet is
+`routedInputPrior q` for a unique parameter `q ∈ [0, 1]`. -/
+theorem routePrior_eq_routedInputPrior (prior : Route → ℝ)
+    (hprior : IsFiniteDistribution prior) :
+    ∃! q : ℝ, 0 ≤ q ∧ q ≤ 1 ∧ prior = routedInputPrior q := by
+  refine ⟨prior .viaMid, ?_, ?_⟩
+  · have hsum := hprior.2
+    rw [sum_routes] at hsum
+    refine ⟨hprior.1 .viaMid, ?_, ?_⟩
+    · linarith [hprior.1 .direct]
+    · funext route
+      cases route with
+      | direct =>
+          simp [routedInputPrior]
+          linarith
+      | viaMid => rfl
+  · intro q hq
+    simpa [routedInputPrior] using (congrFun hq.2.2 Route.viaMid).symm
+
+/-- The one-use joint route/output law obtained by first drawing a route from
+`routedInputPrior q` and then passing it through `routeChannel`. -/
+def routedInputJointMass (q : ℝ) (route : Route) (output : Bool) : ℝ :=
+  routedInputPrior q route * routeChannel route output
+
+theorem routedInputJointMass_is_distribution {q : ℝ} (hq0 : 0 ≤ q)
+    (hq1 : q ≤ 1) :
+    IsFiniteDistribution (fun x : Route × Bool => routedInputJointMass q x.1 x.2) := by
+  constructor
+  · rintro ⟨route, output⟩
+    exact mul_nonneg ((routedInputPrior_is_distribution hq0 hq1).1 route)
+      ((routeChannel_is_distribution route).1 output)
+  · rw [Fintype.sum_prod_type, sum_routes]
+    simp_rw [sum_bools]
+    norm_num [routedInputJointMass, routedInputPrior, routeChannel]
+    ring
+
+/-- The output marginal of the parameterized one-use joint law. -/
+def routedInputOutputMarginal (q : ℝ) (output : Bool) : ℝ :=
+  ∑ route : Route, routedInputJointMass q route output
+
+theorem routedInputOutputMarginal_false (q : ℝ) :
+    routedInputOutputMarginal q false = q / 2 := by
+  rw [routedInputOutputMarginal, sum_routes]
+  norm_num [routedInputJointMass, routedInputPrior, routeChannel]
+  ring
+
+theorem routedInputOutputMarginal_true (q : ℝ) :
+    routedInputOutputMarginal q true = 1 - q / 2 := by
+  rw [routedInputOutputMarginal, sum_routes]
+  norm_num [routedInputJointMass, routedInputPrior, routeChannel]
+  ring
+
+/-- Entropy of the parameterized joint law's output marginal, in nats. -/
+def routedInputOutputEntropy (q : ℝ) : ℝ :=
+  finiteEntropy (routedInputOutputMarginal q)
+
+theorem routedInputOutputEntropy_eq (q : ℝ) :
+    routedInputOutputEntropy q = Real.binEntropy (q / 2) := by
+  unfold routedInputOutputEntropy finiteEntropy
+  rw [sum_bools, routedInputOutputMarginal_false,
+    routedInputOutputMarginal_true]
+  simp [shannonTerm, Real.binEntropy]
+
+/-- Channel conditional entropy under `routedInputPrior q`, in nats. -/
+def routedInputConditionalEntropy (q : ℝ) : ℝ :=
+  ∑ route : Route, routedInputPrior q route * finiteEntropy (routeChannel route)
+
+theorem routedInputConditionalEntropy_eq (q : ℝ) :
+    routedInputConditionalEntropy q = q * Real.log 2 := by
+  have hdirect : finiteEntropy (routeChannel .direct) = 0 := by
+    unfold finiteEntropy
+    rw [sum_bools]
+    norm_num [routeChannel, shannonTerm]
+  have hvør : finiteEntropy (routeChannel .viaMid) = Real.log 2 := by
+    unfold finiteEntropy
+    rw [sum_bools]
+    norm_num [routeChannel, shannonTerm]
+    ring
+  unfold routedInputConditionalEntropy
+  rw [sum_routes, hdirect, hvør]
+  simp [routedInputPrior]
+
+/-- Closed form for one-use mutual information in nats.  The finite
+joint-law quantity below is proved equal to this expression on `[0, 1]`. -/
+def oneUseMutualInformation (q : ℝ) : ℝ :=
+  Real.binEntropy (q / 2) - q * Real.log 2
+
+/-- One-use mutual information as the project's finite sum for the
+parameterized route/output joint law and its induced marginals. -/
+def oneUseJointMutualInformation (q : ℝ) : ℝ :=
+  finiteMutualInformation (routedInputJointMass q) (routedInputPrior q)
+    (routedInputOutputMarginal q)
+
+/-- On the probability interval, the finite mutual-information sum of the
+parameterized joint law equals its entropy closed form.  The endpoint cases
+are evaluated separately because a route has zero mass there. -/
+theorem oneUseJointMutualInformation_eq_closed_form (q : ℝ) (hq0 : 0 ≤ q)
+    (hq1 : q ≤ 1) :
+    oneUseJointMutualInformation q = oneUseMutualInformation q := by
+  rcases eq_or_lt_of_le hq0 with rfl | hqpos
+  · unfold oneUseJointMutualInformation finiteMutualInformation
+    simp_rw [routedInputOutputMarginal, sum_routes, sum_bools]
+    norm_num [routedInputJointMass, routedInputPrior, routeChannel,
+      oneUseMutualInformation, Real.binEntropy]
+  rcases eq_or_lt_of_le hq1 with rfl | hqlt
+  · unfold oneUseJointMutualInformation finiteMutualInformation
+    simp_rw [routedInputOutputMarginal, sum_routes, sum_bools]
+    norm_num [routedInputJointMass, routedInputPrior, routeChannel,
+      oneUseMutualInformation, Real.binEntropy]
+    ring
+  have hqne : q ≠ 0 := ne_of_gt hqpos
+  have hsubne : 1 - q ≠ 0 := ne_of_gt (sub_pos.mpr hqlt)
+  have hmargpos : 0 < 1 - q / 2 := by nlinarith
+  have hmargne : 1 - q / 2 ≠ 0 := ne_of_gt hmargpos
+  have hsum : 1 - q + q * 2⁻¹ = 1 - q / 2 := by norm_num; ring
+  have hdirect : (1 - q) / ((1 - q) * (1 - q / 2)) = 1 / (1 - q / 2) := by
+    field_simp
+  have hfalse : q * 2⁻¹ / (q * (q * 2⁻¹)) = 1 / q := by
+    field_simp
+  have htrue : q * 2⁻¹ / (q * (1 - q / 2)) = 1 / (2 * (1 - q / 2)) := by
+    field_simp
+  unfold oneUseJointMutualInformation finiteMutualInformation
+  simp_rw [routedInputOutputMarginal, sum_routes, sum_bools]
+  simp [routedInputJointMass, routedInputPrior, routeChannel,
+    oneUseMutualInformation, Real.binEntropy, hqne, hsubne]
+  rw [hsum, hdirect, hfalse, htrue]
+  simp only [one_div]
+  rw [Real.log_inv, Real.log_inv, Real.log_inv,
+    Real.log_mul (by norm_num : (2 : ℝ) ≠ 0) hmargne,
+    Real.log_div (by norm_num : (2 : ℝ) ≠ 0) hqne]
+  ring
+
+/-- The one-use mutual information is the output entropy minus the expected
+channel conditional entropy of the explicit joint law. -/
+theorem oneUseMutualInformation_from_joint (q : ℝ) :
+    oneUseMutualInformation q =
+      routedInputOutputEntropy q - routedInputConditionalEntropy q := by
+  rw [routedInputOutputEntropy_eq, routedInputConditionalEntropy_eq]
+  rfl
+
+private theorem oneUseMutualInformation_as_qaryEntropy (q : ℝ) :
+    oneUseMutualInformation q =
+      Real.qaryEntropy 5 (1 - q / 2) - Real.log 4 := by
+  unfold oneUseMutualInformation Real.qaryEntropy
+  norm_num
+  rw [log_four_eq_two_log_two]
+  ring
+
+/-- At the routed-input probability `2/5`, the one-use information is exactly
+`log (5/4)` nats. -/
+theorem oneUseMutualInformation_at_two_fifths :
+    oneUseMutualInformation (2 / 5) = Real.log (5 / 4) := by
+  unfold oneUseMutualInformation Real.binEntropy
+  norm_num
+  rw [Real.log_div (by norm_num) (by norm_num), log_four_eq_two_log_two]
+  ring
+
+private theorem oneUseMutualInformation_lt_capacity {q : ℝ} (hq0 : 0 ≤ q)
+    (hq1 : q ≤ 1) (hq : q ≠ 2 / 5) :
+    oneUseMutualInformation q < Real.log (5 / 4) := by
+  by_cases hlt : q < 2 / 5
+  · have hy : 1 - q / 2 ∈ Set.Icc (1 - 1 / (5 : ℝ)) 1 := by
+      constructor <;> nlinarith
+    have hopt : 1 - (2 / 5 : ℝ) / 2 ∈ Set.Icc (1 - 1 / (5 : ℝ)) 1 := by
+      norm_num
+    have hyopt : 1 - (2 / 5 : ℝ) / 2 < 1 - q / 2 := by
+      linarith
+    have hstrict : Real.qaryEntropy 5 (1 - q / 2) <
+        Real.qaryEntropy 5 (1 - (2 / 5 : ℝ) / 2) :=
+      Real.qaryEntropy_strictAntiOn (by norm_num) hopt hy hyopt
+    calc
+      oneUseMutualInformation q =
+          Real.qaryEntropy 5 (1 - q / 2) - Real.log 4 :=
+        oneUseMutualInformation_as_qaryEntropy q
+      _ < Real.qaryEntropy 5 (1 - (2 / 5 : ℝ) / 2) - Real.log 4 :=
+        sub_lt_sub_right hstrict _
+      _ = oneUseMutualInformation (2 / 5) :=
+        (oneUseMutualInformation_as_qaryEntropy _).symm
+      _ = Real.log (5 / 4) := oneUseMutualInformation_at_two_fifths
+  · have hgt : 2 / 5 < q :=
+      lt_of_le_of_ne (le_of_not_gt hlt) (Ne.symm hq)
+    have hy : 1 - q / 2 ∈ Set.Icc 0 (1 - 1 / (5 : ℝ)) := by
+      constructor <;> nlinarith
+    have hopt : 1 - (2 / 5 : ℝ) / 2 ∈ Set.Icc 0 (1 - 1 / (5 : ℝ)) := by
+      norm_num
+    have hyopt : 1 - q / 2 < 1 - (2 / 5 : ℝ) / 2 := by
+      linarith
+    have hstrict : Real.qaryEntropy 5 (1 - q / 2) <
+        Real.qaryEntropy 5 (1 - (2 / 5 : ℝ) / 2) :=
+      Real.qaryEntropy_strictMonoOn (by norm_num) hy hopt hyopt
+    calc
+      oneUseMutualInformation q =
+          Real.qaryEntropy 5 (1 - q / 2) - Real.log 4 :=
+        oneUseMutualInformation_as_qaryEntropy q
+      _ < Real.qaryEntropy 5 (1 - (2 / 5 : ℝ) / 2) - Real.log 4 :=
+        sub_lt_sub_right hstrict _
+      _ = oneUseMutualInformation (2 / 5) :=
+        (oneUseMutualInformation_as_qaryEntropy _).symm
+      _ = Real.log (5 / 4) := oneUseMutualInformation_at_two_fifths
+
+/-- The channel's one-use capacity is at most `log (5/4)` nats. -/
+theorem oneUseMutualInformation_capacity (q : ℝ) (hq0 : 0 ≤ q) (hq1 : q ≤ 1) :
+    oneUseMutualInformation q ≤ Real.log (5 / 4) := by
+  by_cases hq : q = 2 / 5
+  · subst q
+    exact le_of_eq oneUseMutualInformation_at_two_fifths
+  · exact (oneUseMutualInformation_lt_capacity hq0 hq1 hq).le
+
+/-- Within the probability interval, the capacity is attained only by routed
+input probability `2/5`. -/
+theorem oneUseMutualInformation_eq_capacity_iff (q : ℝ) (hq0 : 0 ≤ q)
+    (hq1 : q ≤ 1) :
+    oneUseMutualInformation q = Real.log (5 / 4) ↔ q = 2 / 5 := by
+  constructor
+  · intro hq
+    by_contra hne
+    have hlt := oneUseMutualInformation_lt_capacity hq0 hq1 hne
+    linarith
+  · intro hq
+    subst q
+    exact oneUseMutualInformation_at_two_fifths
+
+/-- The actual finite joint-law mutual information has one-use capacity at
+most `log (5/4)` nats. -/
+theorem oneUseJointMutualInformation_capacity (q : ℝ) (hq0 : 0 ≤ q)
+    (hq1 : q ≤ 1) :
+    oneUseJointMutualInformation q ≤ Real.log (5 / 4) := by
+  rw [oneUseJointMutualInformation_eq_closed_form q hq0 hq1]
+  exact oneUseMutualInformation_capacity q hq0 hq1
+
+/-- Within the probability interval, the actual finite joint-law mutual
+information reaches capacity only at routed-input probability `2/5`. -/
+theorem oneUseJointMutualInformation_eq_capacity_iff (q : ℝ) (hq0 : 0 ≤ q)
+    (hq1 : q ≤ 1) :
+    oneUseJointMutualInformation q = Real.log (5 / 4) ↔ q = 2 / 5 := by
+  rw [oneUseJointMutualInformation_eq_closed_form q hq0 hq1]
+  exact oneUseMutualInformation_eq_capacity_iff q hq0 hq1
+
+/-- The actual finite joint-law mutual information reaches the exact
+capacity at routed-input probability `2/5`. -/
+theorem oneUseJointMutualInformation_at_two_fifths :
+    oneUseJointMutualInformation (2 / 5) = Real.log (5 / 4) := by
+  rw [oneUseJointMutualInformation_eq_closed_form (2 / 5) (by norm_num)
+    (by norm_num)]
+  exact oneUseMutualInformation_at_two_fifths
+
+/-- The memoryless product channel for a word of `n` independently used route
+channels.  This establishes the product-channel model needed before studying
+codes; it does not state or prove a coding theorem. -/
+def blockChannel (n : ℕ) (input : Fin n → Route) (output : Fin n → Bool) : ℝ :=
+  ∏ i, routeChannel (input i) (output i)
+
+/-- Every fixed input word induces a normalized, nonnegative distribution on
+output words. -/
+theorem blockChannel_is_distribution (n : ℕ) (input : Fin n → Route) :
+    IsFiniteDistribution (blockChannel n input) := by
+  constructor
+  · intro output
+    unfold blockChannel
+    apply Finset.prod_nonneg
+    intro i _
+    exact (routeChannel_is_distribution (input i)).1 (output i)
+  · unfold blockChannel
+    calc
+      (∑ output : Fin n → Bool, ∏ i, routeChannel (input i) (output i)) =
+          ∏ i, ∑ output : Bool, routeChannel (input i) output :=
+        (Fintype.prod_sum _).symm
+      _ = ∏ _i : Fin n, (1 : ℝ) := by
+        apply Finset.prod_congr rfl
+        intro i _
+        exact (routeChannel_is_distribution (input i)).2
+      _ = 1 := by simp
+
+/-- The empty product channel assigns its unique empty output word mass one. -/
+theorem blockChannel_zero (input : Fin 0 → Route) (output : Fin 0 → Bool) :
+    blockChannel 0 input output = 1 := by
+  simp [blockChannel]
+
+/-- A one-symbol block channel is the original route channel. -/
+theorem blockChannel_one (input : Fin 1 → Route) (output : Fin 1 → Bool) :
+    blockChannel 1 input output = routeChannel (input 0) (output 0) := by
+  simp [blockChannel]
+
 /-! ## Headline checks -/
 
 example : directSelectionEntropy = 0 := direct_selection_entropy
@@ -639,6 +939,36 @@ example : uniformRouteMutualInformation =
 example : composeLossChannel (1 / 2) (1 / 2) true true = 1 / 4 :=
   two_routed_fresh_stages_survival
 
+example (q : ℝ) (hq0 : 0 ≤ q) (hq1 : q ≤ 1) :
+    oneUseMutualInformation q ≤ Real.log (5 / 4) :=
+  oneUseMutualInformation_capacity q hq0 hq1
+
+example : oneUseMutualInformation (2 / 5) = Real.log (5 / 4) :=
+  oneUseMutualInformation_at_two_fifths
+
+example (q : ℝ) (hq0 : 0 ≤ q) (hq1 : q ≤ 1) :
+    oneUseJointMutualInformation q = oneUseMutualInformation q :=
+  oneUseJointMutualInformation_eq_closed_form q hq0 hq1
+
+example (q : ℝ) (hq0 : 0 ≤ q) (hq1 : q ≤ 1) :
+    oneUseJointMutualInformation q ≤ Real.log (5 / 4) :=
+  oneUseJointMutualInformation_capacity q hq0 hq1
+
+example : oneUseJointMutualInformation (2 / 5) = Real.log (5 / 4) :=
+  oneUseJointMutualInformation_at_two_fifths
+
+example (q : ℝ) (hq0 : 0 ≤ q) (hq1 : q ≤ 1) :
+    oneUseJointMutualInformation q = Real.log (5 / 4) ↔ q = 2 / 5 :=
+  oneUseJointMutualInformation_eq_capacity_iff q hq0 hq1
+
+example (q : ℝ) (hq0 : 0 ≤ q) (hq1 : q ≤ 1) :
+    oneUseMutualInformation q = Real.log (5 / 4) ↔ q = 2 / 5 :=
+  oneUseMutualInformation_eq_capacity_iff q hq0 hq1
+
+example (n : ℕ) (input : Fin n → Route) :
+    IsFiniteDistribution (blockChannel n input) :=
+  blockChannel_is_distribution n input
+
 section Verification
 
 #print axioms minblock_routed_iff
@@ -656,6 +986,19 @@ section Verification
 #print axioms fresh_stage_composite_row_is_distribution
 #print axioms fresh_stage_lossChannel_compose
 #print axioms two_routed_fresh_stages_survival
+#print axioms routedInputJointMass_is_distribution
+#print axioms routePrior_eq_routedInputPrior
+#print axioms oneUseMutualInformation_from_joint
+#print axioms oneUseMutualInformation_at_two_fifths
+#print axioms oneUseMutualInformation_capacity
+#print axioms oneUseMutualInformation_eq_capacity_iff
+#print axioms oneUseJointMutualInformation_eq_closed_form
+#print axioms oneUseJointMutualInformation_at_two_fifths
+#print axioms oneUseJointMutualInformation_capacity
+#print axioms oneUseJointMutualInformation_eq_capacity_iff
+#print axioms blockChannel_is_distribution
+#print axioms blockChannel_zero
+#print axioms blockChannel_one
 
 end Verification
 

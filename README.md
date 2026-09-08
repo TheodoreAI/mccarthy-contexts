@@ -22,9 +22,18 @@ subtype, then imposes (rather than infers) a uniform policy on that subtype.
 The direct singleton has entropy `0`; routed selection has entropy `log 2`
 nats. The remaining Shannon quantities are derived from an explicit finite
 route/output joint law. Its separate loss-channel calculation assumes
-memoryless, fresh-stage composition for the distinguished fact.
+memoryless, fresh-stage composition for the distinguished fact.  With routed
+input probability `q`, the project's finite-sum mutual information of the
+parameterized joint law is proved, including its zero-mass endpoint branches,
+equal to `binEntropy (q / 2) - q * log 2` nats.  That actual finite-sum
+quantity has exact capacity `log (5 / 4)` and unique optimizer `q = 2 / 5`;
+because the input alphabet has exactly two routes, this `q`-family uniquely
+parametrizes every input probability distribution.
+Its coordinatewise product law is proved normalized for every fixed finite
+input word; this supplies the memoryless channel model before coding, not a
+coding theorem.
 
-**22 results, no `sorry`.** Axiom use is confined to `propext`,
+**23 results, no `sorry`.** Axiom use is confined to `propext`,
 `Classical.choice` and `Quot.sound`; several results depend on no axioms at all.
 
 ## Building
@@ -71,8 +80,9 @@ Start reading at `Development/Tower.lean`.
 | `Development/Theories.lean` | contexts as theories: classical consequence is monotone, circumscriptive consequence is not | new |
 | `Development/Lifting.lean` | lifting transfers, is defeasible, and admits **incomparable minimal resolutions** | new |
 | `Development/Chaining.lean` | lifting is **route-sensitive**: a skeptical direct consequence becomes merely credulous via an intermediary | new |
-| `Development/InformationTheory.lean` | actual routed blocks are exactly `{p}` or `{q}`; direct Dirac entropy is `0`, routed entropy is `log 2` nats, and a four-cell joint law derives the route/output quantities | new |
+| `Development/InformationTheory.lean` | actual routed blocks are exactly `{p}` or `{q}`; direct Dirac entropy is `0`, routed entropy is `log 2` nats, every route-input distribution is uniquely parameterized by `q`, and the resulting formal finite-sum mutual information equals its entropy closed form and has capacity `log (5 / 4)` nats uniquely at `q = 2 / 5`; normalized product channels model repeated uses | new |
 | `Definitions/Def_TranscendenceTowerInformationTheory.lean` + `Solutions/Sol_information_theory_joint_law.lean` | platform-shaped five-part headline: exact routed-block classification and its uniform law; unique direct singleton entropy `0`; fair routed entropy `log 2`; explicit-joint-law normalization, survival `3/4`, conditional entropy, and mutual information; and fresh-stage loss-channel composition | new |
+| `Definitions/Def_TranscendenceTowerChannelCapacity.lean` + `Solutions/Sol_information_theory_channel_capacity.lean` | platform-shaped capacity extension: exhaustive unique parameterization of route priors, the induced joint law, its finite-sum mutual information's equivalence to the entropy closed form, exact one-use capacity `log (5 / 4)` uniquely at `q = 2 / 5`, and a normalized memoryless product channel for each fixed input word | new |
 
 ## Notes for the OSU COE cluster
 

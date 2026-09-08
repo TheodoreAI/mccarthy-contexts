@@ -1,0 +1,3 @@
+value: Define capacity as the maximum over routed-input probability q in [0,1] of binEntropy(q/2) - q*log 2, and prove log(5/4) is attained uniquely at q=2/5.
+reason: This is the Shannon capacity of the concrete direct-versus-routed Z-channel under its operational route input.
+decided_at: 2026-09-07T23:03:32+00:00
