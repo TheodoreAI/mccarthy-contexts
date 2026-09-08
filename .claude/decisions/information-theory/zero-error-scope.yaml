@@ -1,0 +1,3 @@
+value: Define a zero-error code by a support condition - the decoder is correct on every output word of positive probability - rather than by an error probability equal to zero, and prove the zero-error capacity of the route/survival channel is 0.
+reason: 'The support formulation is finite combinatorics with no measure theory and no asymptotics, and it is the formulation that makes the argument a one-liner: the all-survive word has positive mass under every input word, so no decoder can separate two codewords. It also contrasts sharply with the positive Shannon capacity already proved.'
+decided_at: '2026-09-08T00:35:00+00:00'

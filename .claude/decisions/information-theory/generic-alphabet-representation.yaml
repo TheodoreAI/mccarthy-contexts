@@ -1,0 +1,3 @@
+value: Build generic finite information theory on bare mass functions `α → ℝ` over `[Fintype α]`, not on Mathlib `PMF` or measures, and keep the `if joint = 0 then 0` guard as the definitional convention.
+reason: Mathlib has no discrete entropy, conditional entropy or mutual information at all, so there is nothing to inherit; bare Fintype sums keep the existing route/survival proofs reusable verbatim. The cost is deferred - an achievability proof needs iid sequences and a law of large numbers, which live on the PMF/measure side, so that half would require a bridge built at that time.
+decided_at: '2026-09-08T00:35:00+00:00'
