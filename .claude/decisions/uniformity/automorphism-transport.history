@@ -1,0 +1,4 @@
+- decided_at: '2026-09-08T09:30:00+00:00'
+  event: initial
+  value: Prove rigidity through a general `LogAut` transport lemma -- a bijection of formulas realised by a bijection of valuations -- rather than directly about the shift.
+  reason: Step 1 of the trichotomy (Theorem 3) and rigidity (Theorem 5) are the same argument applied to two different group actions: an atom permutation in one case, the shift in the other. Both say an automorphism fixing the base theory pointwise and preserving the schema carries extensions to extensions, so uniqueness forces invariance. Stating it once as `LogAut.isExtension_pre` means the trichotomy work inherits a proved lemma instead of repeating it, and it isolates exactly which properties are load-bearing: invertibility on formulas AND on valuations, plus commutation with negation for the justification test.

@@ -51,7 +51,7 @@ supports are proved alongside it.  The link between the two — the data
 processing inequality — is **not** proved, so the converse is stated for an
 arbitrary information bound rather than instantiated at `n · log (5/4)`.
 
-**26 results, no `sorry`.** Axiom use is confined to `propext`,
+**28 results, no `sorry`.** Axiom use is confined to `propext`,
 `Classical.choice` and `Quot.sound`; several results depend on no axioms at all.
 
 ## Building
@@ -106,6 +106,8 @@ Start reading at `Development/Tower.lean`.
 | `Development/FiniteInformationProduct.lean` | the independence bound `H(Y₁…Yₙ) ≤ Σ H(Yᵢ)` by an induction peeling the last coordinate; entropy additivity across coordinates of a product law (memorylessness); the input/output joint law of a prior and a memoryless channel; and the **n-use bound** `I(Xⁿ;Yⁿ) ≤ Σᵢ [H(Yᵢ) − H(Yᵢ∣Xᵢ)]` for an arbitrary, possibly correlated input prior | new |
 | `Development/Fano.lean` | **Fano's inequality** `H(truth∣guess) ≤ h(Pe) + Pe·log M`, with the constant `log M` rather than `log (M−1)` so the comparison law can be a sub-probability and no off-diagonal counting is needed | new |
 | `Development/WeakConverse.lean` | the **weak converse**: `H(truth) ≤ B + h(Pe) + Pe·log M` given `I ≤ B`, and the uniform rate bound `(1−Pe)·log M ≤ B + h(Pe)`; `B` is a hypothesis, since joining it to the n-use bound needs the unproved data processing inequality | new |
+| `Development/Uniformity.lean` | the **monotone dichotomy**: a proposition-uniform monotone lifting schema over a context-free base theory is conservative, so uniformity and novelty are incompatible; proved semantically by composing valuations, which needs neither a proof calculus nor compactness, and with no frame at all | new |
+| `Development/Rigidity.lean` | **rigidity**: a context-uniform schema's unique consistent extension is shift-invariant, so every level of the tower carries the same content — read through the shift in general, literally on the base language; proved via a general transport lemma for logical automorphisms, which also supplies Step 1 of the trichotomy. Requires the frame map to be a bijection. Also: a monotone schema has at most one consistent extension, and the copy schema is a full instance | new |
 
 ## Notes for the OSU COE cluster
 
