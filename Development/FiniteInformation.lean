@@ -308,6 +308,57 @@ theorem mutualInfo_le_entropy_snd {joint : α → β → ℝ}
   rw [mutualInfo_eq_sub_condEntropy hnn]
   linarith [condEntropy_nonneg hnn]
 
+/-! ## Maximum entropy
+
+A distribution on a finite alphabet has entropy at most `log` of the alphabet
+size, with the uniform law attaining it.  This is Gibbs' inequality against the
+uniform distribution, and it supplies the `log(M-1)` term in Fano's
+inequality. -/
+
+/-- **Maximum entropy.**  No distribution on a finite alphabet is more
+uncertain than the uniform one. -/
+theorem entropy_le_log_card {p : α → ℝ} (hnn : ∀ x, 0 ≤ p x)
+    (hsum : ∑ x, p x = 1) : entropy p ≤ Real.log (Fintype.card α) := by
+  have hne : Nonempty α := by
+    by_contra h
+    rw [not_nonempty_iff] at h
+    simp at hsum
+  have hcard : 0 < (Fintype.card α : ℝ) := by
+    exact_mod_cast Fintype.card_pos
+  -- Cellwise: `shannon (p x) - p x * log N ≤ 1/N - p x`.
+  have hcell : ∀ x : α,
+      shannon (p x) - p x * Real.log (Fintype.card α)
+        ≤ (Fintype.card α : ℝ)⁻¹ - p x := by
+    intro x
+    by_cases hz : p x = 0
+    · rw [hz]
+      have hinv : (0 : ℝ) ≤ (Fintype.card α : ℝ)⁻¹ := by positivity
+      simpa using hinv
+    · have hpos : 0 < p x := lt_of_le_of_ne (hnn x) (Ne.symm hz)
+      have hprod : 0 < (Fintype.card α : ℝ) * p x := mul_pos hcard hpos
+      have hlog : Real.log ((Fintype.card α : ℝ) * p x)⁻¹
+          ≤ ((Fintype.card α : ℝ) * p x)⁻¹ - 1 :=
+        Real.log_le_sub_one_of_pos (by positivity)
+      have hrw : shannon (p x) - p x * Real.log (Fintype.card α)
+          = p x * Real.log ((Fintype.card α : ℝ) * p x)⁻¹ := by
+        unfold shannon
+        rw [Real.log_inv, Real.log_inv, Real.log_mul hcard.ne' hz]
+        ring
+      rw [hrw]
+      calc p x * Real.log ((Fintype.card α : ℝ) * p x)⁻¹
+          ≤ p x * (((Fintype.card α : ℝ) * p x)⁻¹ - 1) :=
+            mul_le_mul_of_nonneg_left hlog (le_of_lt hpos)
+        _ = (Fintype.card α : ℝ)⁻¹ - p x := by
+            field_simp
+  have hsumcell : ∑ x : α, (shannon (p x) - p x * Real.log (Fintype.card α))
+      ≤ ∑ x : α, ((Fintype.card α : ℝ)⁻¹ - p x) :=
+    Finset.sum_le_sum fun x _ => hcell x
+  rw [Finset.sum_sub_distrib, Finset.sum_sub_distrib, ← Finset.sum_mul, hsum,
+    one_mul, Finset.sum_const, Finset.card_univ, nsmul_eq_mul] at hsumcell
+  rw [mul_inv_cancel₀ (ne_of_gt hcard)] at hsumcell
+  unfold entropy
+  linarith
+
 /-! ## Independent laws: entropy is additive
 
 For a product law `J(a,b) = p(a) q(b)` the joint entropy is exactly
@@ -352,6 +403,8 @@ theorem condEntropy_le_entropy {joint : α → β → ℝ} (hnn : ∀ a b, 0 ≤
 
 section Verification
 
+#print axioms entropy_le_log_card
+#print axioms jointEntropy_product
 #print axioms condEntropy_le_entropy
 #print axioms marginals_isDist
 #print axioms chain_rule
