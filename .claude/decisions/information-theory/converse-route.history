@@ -1,0 +1,4 @@
+- decided_at: '2026-09-08T04:05:00+00:00'
+  event: initial
+  value: Reach the n-letter bound WITHOUT conditional mutual information and without an n-fold chain rule. Prove the independence bound H(Y_1..Y_n) <= sum H(Y_i) by induction that peels the LAST coordinate (Fin.snoc), turning each step into the ordinary two-variable subadditivity already proved.
+  reason: The originally planned route -- define conditional mutual information over a three-variable joint, then an n-fold chain rule -- would have required generalizing every definition from curried two-argument laws to three, which is a large refactor of an interface already published to Prove2Me. Peeling one coordinate at a time needs only jointEntropy_le_add, which exists. Conditioning-reduces-entropy (H(b|a) <= H(b)) falls straight out of Gibbs and supplies the content CMI would have been used for.

@@ -308,8 +308,18 @@ theorem mutualInfo_le_entropy_snd {joint : α → β → ℝ}
   rw [mutualInfo_eq_sub_condEntropy hnn]
   linarith [condEntropy_nonneg hnn]
 
+/-- **Conditioning reduces entropy**: `H(β ∣ α) ≤ H(β)`.  Equivalent to
+Gibbs' inequality, and the workhorse of the `n`-letter bound. -/
+theorem condEntropy_le_entropy {joint : α → β → ℝ} (hnn : ∀ a b, 0 ≤ joint a b)
+    (hsum : ∑ a, ∑ b, joint a b = 1) :
+    condEntropy joint ≤ entropy (sndMarginal joint) := by
+  have h := mutualInfo_nonneg hnn hsum
+  rw [mutualInfo_eq_sub_condEntropy hnn] at h
+  linarith
+
 section Verification
 
+#print axioms condEntropy_le_entropy
 #print axioms marginals_isDist
 #print axioms chain_rule
 #print axioms mutualInfo_eq_entropies
