@@ -142,8 +142,146 @@ theorem entropy_le_sum_coordMarginal :
     rw [Fin.sum_univ_castSucc]
     linarith [hsub, hih, hlast.ge, hlast.le]
 
+/-! ## Product laws on words: memorylessness
+
+A family of per-coordinate laws induces a product law on words.  Its
+normalization and its entropy both factor, the latter giving exactly the
+additivity that makes a product channel memoryless. -/
+
+/-- The product law on words induced by a family of per-coordinate laws. -/
+def productLaw {n : ℕ} (rows : Fin n → β → ℝ) : (Fin n → β) → ℝ :=
+  fun w => ∏ i, rows i (w i)
+
+/-- Peeling the last coordinate off a product law leaves a product law. -/
+theorem productLaw_snoc {n : ℕ} (rows : Fin (n + 1) → β → ℝ)
+    (w : Fin n → β) (b : β) :
+    productLaw rows (Fin.snoc w b)
+      = productLaw (fun i => rows i.castSucc) w * rows (Fin.last n) b := by
+  unfold productLaw
+  rw [Fin.prod_univ_castSucc]
+  simp
+
+theorem productLaw_nonneg {n : ℕ} {rows : Fin n → β → ℝ}
+    (hnn : ∀ i b, 0 ≤ rows i b) (w : Fin n → β) : 0 ≤ productLaw rows w :=
+  Finset.prod_nonneg fun i _ => hnn i (w i)
+
+/-- The mass of a product law factors as the product of the row masses. -/
+theorem sum_productLaw :
+    ∀ (n : ℕ) (rows : Fin n → β → ℝ),
+      ∑ w : Fin n → β, productLaw rows w = ∏ i, ∑ b, rows i b := by
+  intro n
+  induction n with
+  | zero =>
+    intro rows
+    rw [Finset.univ_unique, Finset.sum_singleton]
+    simp [productLaw]
+  | succ n ih =>
+    intro rows
+    rw [sum_snoc]
+    have hrow : ∀ w ∈ (Finset.univ : Finset (Fin n → β)),
+        ∑ b, productLaw rows (Fin.snoc w b)
+          = productLaw (fun i => rows i.castSucc) w * ∑ b, rows (Fin.last n) b := by
+      intro w _
+      rw [Finset.mul_sum]
+      exact Finset.sum_congr rfl fun b _ => productLaw_snoc rows w b
+    rw [Finset.sum_congr rfl hrow, ← Finset.sum_mul, ih, Fin.prod_univ_castSucc]
+
+/-- **Entropy is additive across coordinates of a product law.**  This is
+memorylessness: independent uses contribute independently to uncertainty. -/
+theorem entropy_productLaw :
+    ∀ (n : ℕ) (rows : Fin n → β → ℝ), (∀ i b, 0 ≤ rows i b) →
+      (∀ i, ∑ b, rows i b = 1) →
+      entropy (productLaw rows) = ∑ i : Fin n, entropy (rows i) := by
+  intro n
+  induction n with
+  | zero =>
+    intro rows _ _
+    unfold entropy
+    rw [Finset.univ_unique, Finset.sum_singleton]
+    simp [productLaw]
+  | succ n ih =>
+    intro rows hnn hsum
+    have hrest : ∀ (i : Fin n) (b : β), 0 ≤ rows (Fin.castSucc i) b :=
+      fun i b => hnn _ b
+    have hrests : ∀ i : Fin n, ∑ b, rows (Fin.castSucc i) b = 1 := fun i => hsum _
+    have hprefix : ∑ w : Fin n → β, productLaw (fun i => rows i.castSucc) w = 1 := by
+      rw [sum_productLaw]
+      simp [hrests]
+    -- The split of a product law is the product of the prefix law and the last row.
+    have hsplit : entropy (productLaw rows)
+        = jointEntropy (fun (w : Fin n → β) (b : β) =>
+            productLaw (fun i => rows i.castSucc) w * rows (Fin.last n) b) := by
+      unfold entropy jointEntropy
+      rw [sum_snoc]
+      exact Finset.sum_congr rfl fun w _ =>
+        Finset.sum_congr rfl fun b _ => by rw [productLaw_snoc]
+    rw [hsplit, jointEntropy_product (productLaw_nonneg hrest)
+      (fun b => hnn (Fin.last n) b) hprefix (hsum (Fin.last n)),
+      ih (fun i => rows i.castSucc) hrest hrests, Fin.sum_univ_castSucc]
+
+/-! ## The input/output joint law of a memoryless channel -/
+
+variable {α : Type} [Fintype α] [DecidableEq α]
+
+/-- The word-level joint law of an input prior and a memoryless channel:
+choose an input word from the prior, then pass it through the channel
+coordinatewise and independently. -/
+def channelJoint {n : ℕ} (prior : (Fin n → α) → ℝ) (K : α → β → ℝ) :
+    (Fin n → α) → (Fin n → β) → ℝ :=
+  fun x y => prior x * productLaw (fun i => K (x i)) y
+
+/-- The input marginal of the channel joint is the prior it was built from. -/
+theorem fstMarginal_channelJoint {n : ℕ} (prior : (Fin n → α) → ℝ)
+    (K : α → β → ℝ) (hK : ∀ a, ∑ b, K a b = 1) :
+    fstMarginal (channelJoint prior K) = prior := by
+  funext x
+  unfold fstMarginal channelJoint
+  rw [← Finset.mul_sum, sum_productLaw]
+  simp [hK]
+
+/-- The cellwise form of the memoryless conditional entropy identity. -/
+theorem condEntropy_cell_channel {p q : ℝ} (hp : 0 ≤ p) (hq : 0 ≤ q) :
+    (if p * q = 0 then 0 else (p * q) * Real.log (p / (p * q)))
+      = p * shannon q := by
+  by_cases hp0 : p = 0
+  · simp [hp0]
+  by_cases hq0 : q = 0
+  · simp [hq0]
+  · have hpq : p * q ≠ 0 := mul_ne_zero hp0 hq0
+    simp only [hpq, if_false, shannon]
+    rw [show p / (p * q) = q⁻¹ by field_simp]
+    ring
+
+/-- **Memoryless conditional entropy.**  Conditioned on the input word, the
+remaining uncertainty in the output word is the prior-average of the summed
+per-coordinate row entropies.  Nothing about the channel accumulates across
+uses; this is exactly what memorylessness means. -/
+theorem condEntropy_channelJoint {n : ℕ} (prior : (Fin n → α) → ℝ)
+    (K : α → β → ℝ) (hpn : ∀ x, 0 ≤ prior x) (hKn : ∀ a b, 0 ≤ K a b)
+    (hK : ∀ a, ∑ b, K a b = 1) :
+    condEntropy (channelJoint prior K)
+      = ∑ x : Fin n → α, prior x * ∑ i : Fin n, entropy (K (x i)) := by
+  unfold condEntropy
+  rw [fstMarginal_channelJoint prior K hK]
+  refine Finset.sum_congr rfl fun x _ => ?_
+  have hcell : ∀ y ∈ (Finset.univ : Finset (Fin n → β)),
+      (if channelJoint prior K x y = 0 then 0
+        else channelJoint prior K x y
+          * Real.log (prior x / channelJoint prior K x y))
+        = prior x * shannon (productLaw (fun i => K (x i)) y) :=
+    fun y _ => condEntropy_cell_channel (hpn x)
+      (productLaw_nonneg (fun i b => hKn _ b) y)
+  rw [Finset.sum_congr rfl hcell, ← Finset.mul_sum]
+  congr 1
+  exact entropy_productLaw n (fun i => K (x i)) (fun i b => hKn _ b)
+    (fun i => hK _)
+
 section Verification
 
+#print axioms fstMarginal_channelJoint
+#print axioms condEntropy_channelJoint
+#print axioms sum_productLaw
+#print axioms entropy_productLaw
 #print axioms sum_snoc
 #print axioms sndMarginal_splitLast
 #print axioms coordMarginal_fstMarginal_splitLast

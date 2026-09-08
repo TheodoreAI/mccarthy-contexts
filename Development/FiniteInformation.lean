@@ -308,6 +308,39 @@ theorem mutualInfo_le_entropy_snd {joint : α → β → ℝ}
   rw [mutualInfo_eq_sub_condEntropy hnn]
   linarith [condEntropy_nonneg hnn]
 
+/-! ## Independent laws: entropy is additive
+
+For a product law `J(a,b) = p(a) q(b)` the joint entropy is exactly
+`H(p) + H(q)`.  This is the equality case of subadditivity and, applied
+coordinatewise, is the memorylessness of a product channel. -/
+
+/-- The Shannon summand of a product, cellwise.  Holds for all nonnegative
+arguments, including the degenerate ones. -/
+theorem shannon_mul {x y : ℝ} (hx : 0 ≤ x) (hy : 0 ≤ y) :
+    shannon (x * y) = y * shannon x + x * shannon y := by
+  by_cases hx0 : x = 0
+  · simp [hx0]
+  by_cases hy0 : y = 0
+  · simp [hy0]
+  · unfold shannon
+    rw [mul_inv, Real.log_mul (by simpa using hx0) (by simpa using hy0)]
+    ring
+
+/-- **Entropy is additive on independent laws.** -/
+theorem jointEntropy_product {p : α → ℝ} {q : β → ℝ}
+    (hp : ∀ a, 0 ≤ p a) (hq : ∀ b, 0 ≤ q b)
+    (hps : ∑ a, p a = 1) (hqs : ∑ b, q b = 1) :
+    jointEntropy (fun a b => p a * q b) = entropy p + entropy q := by
+  unfold jointEntropy entropy
+  have hcell : ∀ a ∈ (Finset.univ : Finset α),
+      ∑ b, shannon (p a * q b)
+        = ∑ b, (q b * shannon (p a) + p a * shannon (q b)) :=
+    fun a _ => Finset.sum_congr rfl fun b _ => shannon_mul (hp a) (hq b)
+  rw [Finset.sum_congr rfl hcell]
+  simp only [Finset.sum_add_distrib, ← Finset.sum_mul, ← Finset.mul_sum, hqs,
+    one_mul, mul_one]
+  rw [hps, one_mul]
+
 /-- **Conditioning reduces entropy**: `H(β ∣ α) ≤ H(β)`.  Equivalent to
 Gibbs' inequality, and the workhorse of the `n`-letter bound. -/
 theorem condEntropy_le_entropy {joint : α → β → ℝ} (hnn : ∀ a b, 0 ≤ joint a b)
