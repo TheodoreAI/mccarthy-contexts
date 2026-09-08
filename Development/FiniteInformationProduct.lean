@@ -276,8 +276,91 @@ theorem condEntropy_channelJoint {n : ℕ} (prior : (Fin n → α) → ℝ)
   exact entropy_productLaw n (fun i => K (x i)) (fun i b => hKn _ b)
     (fun i => hK _)
 
+/-! ## Reindexing: from a prior-average to per-coordinate conditional entropies -/
+
+/-- Averaging a function of the `i`-th symbol against a law on words is the
+same as averaging it against that law's `i`-th coordinate marginal. -/
+theorem sum_apply_coord {n : ℕ} (prior : (Fin n → α) → ℝ) (i : Fin n)
+    (f : α → ℝ) :
+    ∑ x : Fin n → α, prior x * f (x i)
+      = ∑ a : α, coordMarginal prior i a * f a := by
+  unfold coordMarginal
+  simp_rw [Finset.sum_mul]
+  rw [Finset.sum_comm]
+  refine Finset.sum_congr rfl fun x _ => ?_
+  symm
+  rw [Finset.sum_eq_single (x i)]
+  · simp
+  · intro a _ hne
+    simp [Ne.symm hne]
+  · intro h
+    exact absurd (Finset.mem_univ _) h
+
+/-- **Memoryless conditional entropy, single-letterized.**  The conditional
+entropy of the output word given the input word is the sum, over coordinates,
+of the conditional entropy of that coordinate given its own input symbol. -/
+theorem condEntropy_channelJoint_coord {n : ℕ} (prior : (Fin n → α) → ℝ)
+    (K : α → β → ℝ) (hpn : ∀ x, 0 ≤ prior x) (hKn : ∀ a b, 0 ≤ K a b)
+    (hK : ∀ a, ∑ b, K a b = 1) :
+    condEntropy (channelJoint prior K)
+      = ∑ i : Fin n, ∑ a : α, coordMarginal prior i a * entropy (K a) := by
+  rw [condEntropy_channelJoint prior K hpn hKn hK]
+  have hswap : ∑ x : Fin n → α, prior x * ∑ i : Fin n, entropy (K (x i))
+      = ∑ i : Fin n, ∑ x : Fin n → α, prior x * entropy (K (x i)) := by
+    simp_rw [Finset.mul_sum]
+    exact Finset.sum_comm
+  rw [hswap]
+  exact Finset.sum_congr rfl fun i _ => sum_apply_coord prior i (fun a => entropy (K a))
+
+/-! ## The `n`-use bound -/
+
+theorem channelJoint_nonneg {n : ℕ} {prior : (Fin n → α) → ℝ} {K : α → β → ℝ}
+    (hpn : ∀ x, 0 ≤ prior x) (hKn : ∀ a b, 0 ≤ K a b) (x : Fin n → α)
+    (y : Fin n → β) : 0 ≤ channelJoint prior K x y :=
+  mul_nonneg (hpn x) (productLaw_nonneg (fun i b => hKn _ b) y)
+
+theorem sum_channelJoint {n : ℕ} {prior : (Fin n → α) → ℝ} {K : α → β → ℝ}
+    (hps : ∑ x, prior x = 1) (hK : ∀ a, ∑ b, K a b = 1) :
+    ∑ x : Fin n → α, ∑ y : Fin n → β, channelJoint prior K x y = 1 := by
+  have h : ∀ x ∈ (Finset.univ : Finset (Fin n → α)),
+      ∑ y : Fin n → β, channelJoint prior K x y = prior x := by
+    intro x _
+    have := congrFun (fstMarginal_channelJoint prior K hK) x
+    exact this
+  rw [Finset.sum_congr rfl h]
+  exact hps
+
+/-- **The `n`-use bound (single-letterization).**  For a memoryless channel and
+any prior on input words, the information the output word carries about the
+input word is at most the sum, over coordinates, of the information a single
+use carries.  Bounding each bracket by the one-use capacity then gives the
+familiar `I(Xⁿ;Yⁿ) ≤ n·C`. -/
+theorem mutualInfo_channelJoint_le {n : ℕ} (prior : (Fin n → α) → ℝ)
+    (K : α → β → ℝ) (hpn : ∀ x, 0 ≤ prior x) (hps : ∑ x, prior x = 1)
+    (hKn : ∀ a b, 0 ≤ K a b) (hK : ∀ a, ∑ b, K a b = 1) :
+    mutualInfo (channelJoint prior K)
+      ≤ ∑ i : Fin n,
+          (entropy (coordMarginal (sndMarginal (channelJoint prior K)) i)
+            - ∑ a : α, coordMarginal prior i a * entropy (K a)) := by
+  have hnn := channelJoint_nonneg (prior := prior) (K := K) hpn hKn
+  have hsum := sum_channelJoint (prior := prior) (K := K) hps hK
+  -- The output word law is a distribution, so the independence bound applies.
+  have houtnn : ∀ y, 0 ≤ sndMarginal (channelJoint prior K) y :=
+    fun y => Finset.sum_nonneg fun x _ => hnn x y
+  have houts : ∑ y, sndMarginal (channelJoint prior K) y = 1 := by
+    rw [sum_sndMarginal]; exact hsum
+  have hind := entropy_le_sum_coordMarginal n
+    (sndMarginal (channelJoint prior K)) houtnn houts
+  rw [mutualInfo_eq_sub_condEntropy hnn,
+    condEntropy_channelJoint_coord prior K hpn hKn hK,
+    Finset.sum_sub_distrib]
+  linarith
+
 section Verification
 
+#print axioms sum_apply_coord
+#print axioms condEntropy_channelJoint_coord
+#print axioms mutualInfo_channelJoint_le
 #print axioms fstMarginal_channelJoint
 #print axioms condEntropy_channelJoint
 #print axioms sum_productLaw
