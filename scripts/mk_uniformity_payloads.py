@@ -230,6 +230,59 @@ The proof is in two steps, and the first is not proved again here.
 **Limits.** Symmetry of $T$ is a hypothesis. The setting is propositional; the substitution argument should survive the passage to first-order but the automorphism group becomes more delicate there and that has not been checked. Corner (C) is exhibited here; occupancy of (U) and (P) is established elsewhere in the same development, by explicit multi-extension and disguised-assertion constructions.
 """
 
+# ---------------------------------------------------------------- 4. records
+
+AUDIT_STMT = ("theorem TranscendenceTower.UniformityPlatform.record_audit"
+              + signature("Sol_uniformity_audit.lean")
+              + " := by sorry\n")
+
+AUDIT_NL = r"""$$
+\varphi \in E_n \quad\Longleftrightarrow\quad \varphi \in \mathrm{Cn}(\Lambda_{\le n})
+\qquad (\varphi \in L)
+$$
+
+A record whose update rule treats all propositions alike says exactly what was logged. Every fact in it is attributable to a revision, and nothing in it is lost silently.
+
+Read the contexts of a lifting schema as the revisions of a record. At revision $n$ a set $\Lambda_n$ of **entries** is logged; entries lie in the base language, since they are claims about the world rather than about the record. Write $\Lambda_{\le n}$ for the entries logged at or before $n$, let $S$ be a fixed update schema with consequents $\Gamma$, and let $E_n$ be an extension of $(\Lambda_{\le n}, S)$.
+
+Four parts.
+
+1. **Audit.** If $S$ is proposition-uniform and $\Lambda_{\le n}\cup\Gamma$ is consistent, then a base sentence lies in the extension exactly when it follows from the entries. The update rule contributes nothing about the world.
+
+2. **Attribution.** If a base sentence is present at revision $n$ and absent at revision $m$, then it follows from the entries logged up to $n$ and not from those logged up to $m$. Some entry between the two revisions is therefore necessary for it: no fact appears that no revision accounts for.
+
+3. **No silent loss.** For $m \le n$, every base sentence of $E_m$ lies in $E_n$. The record's content about the world only grows.
+
+4. **A monotone schema's extension is not $\mathrm{Cn}(\Lambda \cup \Gamma)$.** With the tautological base and the single rule $\frac{a\,:\,\top}{a}$, the extension is $\mathrm{Cn}(\emptyset)$, which does not contain $a$, while $\mathrm{Cn}(\emptyset\cup\{a\})$ does. A monotone rule still carries a prerequisite, and a rule whose prerequisite is never derived never fires.
+
+Part 4 is included because the identity it refutes is the natural bridge between the two halves of this subject, and stating the audit property without it invites the reader to prove it a shorter way that does not work.
+
+**What is not assumed.** The schema need not be monotone: the practically interesting update rules — carry the previous value forward unless something supersedes it — are covered. The base theory need not be symmetric, which matters, because a log is a specific claim about the world and could never satisfy a symmetry hypothesis. Non-uniqueness of the extension is not an obstacle either: the statement holds of every extension, so what multiple extensions cost is reproducibility rather than auditability.
+
+**Limits.** Consistency of $\Lambda_{\le n}\cup\Gamma$ is a hypothesis, and a necessary one: a log that contradicts what the update rule could ever say is a record that proves anything. Context-freeness of the entries is likewise necessary, and so is proposition-uniformity — a schema naming a particular sentence is an assertion in disguise, and it is the assertion rather than the record that would be doing the work.
+"""
+
+AUDIT_EXPL = r"""$$
+E_n \subseteq \mathrm{Cn}(\Lambda_{\le n}\cup\Gamma)
+\quad\text{and}\quad
+\mathrm{Cn}(\Lambda_{\le n}\cup\Gamma)\cap L = \mathrm{Cn}(\Lambda_{\le n})\cap L .
+$$
+
+The whole result is those two facts composed. The first is a one-line induction; the second is the monotone dichotomy.
+
+**The inclusion.** Every stage of the fixed-point construction lies inside $\mathrm{Cn}(\Lambda_{\le n}\cup\Gamma)$. The base stage is $\mathrm{Cn}(\Lambda_{\le n})$, which is contained in it because $\mathrm{Cn}$ is monotone. A successor stage is the consequences of the previous stage together with whichever consequents fired; the first part is handled by monotonicity and idempotence of $\mathrm{Cn}$, and the second because a fired consequent belongs to $\Gamma$ by definition. No hypothesis on the schema is used anywhere in this argument — not monotonicity, not uniformity — which is what makes the audit property available for defeasible update rules.
+
+**The dichotomy.** Proposition-uniformity of the schema gives proposition-uniformity of its consequents, since an atom substitution applied to a rule is again a rule of the schema and acts on the consequent componentwise. The monotone dichotomy then applies with base theory $\Lambda_{\le n}$ and consequent set $\Gamma$, and returns that no new base sentence is derivable.
+
+**Composing them.** A base sentence in $E_n$ lies in $\mathrm{Cn}(\Lambda_{\le n}\cup\Gamma)$ by the inclusion, hence in $\mathrm{Cn}(\Lambda_{\le n})$ by the dichotomy. The converse holds because the base stage of the construction is already $\mathrm{Cn}(\Lambda_{\le n})$, so the extension contains it.
+
+**Attribution and monotonicity** are then immediate. If the sentence is absent at revision $m$ it cannot follow from the entries logged up to $m$, since anything that did would be in $E_m$; and the entries are cumulative, so $\mathrm{Cn}(\Lambda_{\le m})\subseteq\mathrm{Cn}(\Lambda_{\le n})$ for $m\le n$.
+
+**The counterexample.** Take the tautological base and the single rule $\frac{a\,:\,\top}{a}$. Its prerequisite $a$ is not a tautology — the valuation sending every atom to false witnesses this — so the rule never fires, every stage is $\mathrm{Cn}(\emptyset)$, and the extension is $\mathrm{Cn}(\emptyset)$. But $\mathrm{Cn}(\emptyset\cup\{a\})$ contains $a$. Hence the reverse inclusion fails, and the identity between a monotone schema's extension and $\mathrm{Cn}(\Lambda\cup\Gamma)$ holds only for prerequisite-free schemas.
+
+**Formalization note.** Consequence is semantic: $\mathrm{Cn}(T)$ is truth in every valuation satisfying $T$, so no proof calculus is defined and compactness is never used. Extensions are the staged Reiter construction transcribed directly, with the justification test referring to the candidate extension itself. The two sets that would otherwise need names — the consequents of a schema and the entries logged up to a revision — appear inline in the statement, so this node introduces no definitions of its own beyond those already published. The development is free of `sorry` and `native_decide`, with axiom use confined to `propext`, `Classical.choice` and `Quot.sound`.
+"""
+
 # ----------------------------------------------------------------- assembly
 
 definition = {
@@ -240,7 +293,7 @@ definition = {
                    / "Def_TranscendenceTowerContextUniformity.lean")
         .read_text(encoding="utf-8"),
     "natural_language_statement": DEF_NL,
-    "source": SOURCE + ", Section 2 (Framework) and Definition 10.",
+    "source": SOURCE + ", Section 2 (Framework), Definitions 1-11, in particular Definition 11 (Atom automorphisms).",
     "tags": TAGS,
     "private": True,
 }
@@ -253,7 +306,7 @@ theorems = [
         "formal_statement": MONO_STMT,
         "natural_language_statement": MONO_NL,
         "preamble": PREAMBLE,
-        "source": SOURCE + ", Theorem 14 (Monotone dichotomy), Section 3.",
+        "source": SOURCE + ", Theorem 15 (Monotone dichotomy), Section 3.",
         "tags": TAGS,
         "private": True,
     },
@@ -264,7 +317,7 @@ theorems = [
         "formal_statement": RIG_STMT,
         "natural_language_statement": RIG_NL,
         "preamble": PREAMBLE,
-        "source": SOURCE + ", Theorem 20 (Rigidity), Section 5.",
+        "source": SOURCE + ", Theorem 21 (Rigidity), Section 5.",
         "tags": TAGS,
         "private": True,
     },
@@ -275,7 +328,20 @@ theorems = [
         "formal_statement": TRI_STMT,
         "natural_language_statement": TRI_NL,
         "preamble": PREAMBLE,
-        "source": SOURCE + ", Theorem 17 (Trichotomy), Section 4.",
+        "source": SOURCE + ", Theorem 18 (Trichotomy), Section 4.",
+        "tags": TAGS,
+        "private": True,
+    },
+    {
+        "theorem_name": "TranscendenceTower.UniformityPlatform.record_audit",
+        "theorem_title": ("A record whose update rule is uniform says exactly "
+                          "what was logged"),
+        "formal_statement": AUDIT_STMT,
+        "natural_language_statement": AUDIT_NL,
+        "preamble": PREAMBLE,
+        "source": (SOURCE + ", Section 6 (Records): Theorem 25 (Audit), "
+                   "Corollary 26 (Attribution), Corollary 27 (No silent loss), "
+                   "and Remark 6 (Prerequisites)."),
         "tags": TAGS,
         "private": True,
     },
@@ -285,13 +351,16 @@ EXPLANATIONS = {
     "Sol_uniformity_monotone_dichotomy.lean": MONO_EXPL,
     "Sol_uniformity_rigidity.lean": RIG_EXPL,
     "Sol_uniformity_trichotomy.lean": TRI_EXPL,
+    "Sol_uniformity_audit.lean": AUDIT_EXPL,
 }
 
-for stmt in (MONO_STMT, RIG_STMT, TRI_STMT):
+for stmt in (MONO_STMT, RIG_STMT, TRI_STMT, AUDIT_STMT):
     assert stmt.strip().endswith(":= by sorry"), stmt[:120]
 assert "PropUniform" in MONO_STMT
 assert "shiftAut" in RIG_STMT and "Monotone" in RIG_STMT
 assert "SymmetricUnder" in TRI_STMT and "AutL" in TRI_STMT
+assert "IsExtension" in AUDIT_STMT and "Monotone" in AUDIT_STMT
+assert "consequents" not in AUDIT_STMT and "logUpTo" not in AUDIT_STMT
 
 (OUT / "payload_def_uniformity.json").write_text(
     json.dumps(definition, ensure_ascii=False, indent=2), encoding="utf-8")

@@ -21,6 +21,8 @@ SOLUTIONS = {
         "Sol_uniformity_rigidity",
     "TranscendenceTower.UniformityPlatform.uniformity_trichotomy":
         "Sol_uniformity_trichotomy",
+    "TranscendenceTower.UniformityPlatform.record_audit":
+        "Sol_uniformity_audit",
 }
 
 for i, thm in enumerate(THMS):

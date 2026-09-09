@@ -173,12 +173,44 @@ TRICHOTOMY = """theorem solution (A C : Type) :
          fun atomv φ hφ hmem => copy_conservative atomv φ hφ hmem⟩
 """
 
+
+AUDIT = """theorem solution (A C : Type) :
+    (∀ (T : Set (CForm A C)) (S : Set (Rule A C)) (E : Set (CForm A C)),
+        (∀ p ∈ T, IsBase p) → PropUniformRules S →
+        Consistent (T ∪ {γ | ∃ r ∈ S, r.conseq = γ}) →
+        IsExtension T S E →
+        ∀ φ : CForm A C, IsBase φ → (φ ∈ E ↔ φ ∈ Cn T))
+    ∧ (∀ (Log : ℕ → Set (CForm A C)) (S : Set (Rule A C))
+          (Ext : ℕ → Set (CForm A C)),
+        (∀ n, ∀ p ∈ Log n, IsBase p) → PropUniformRules S →
+        (∀ n, Consistent ({p | ∃ i ≤ n, p ∈ Log i} ∪ {γ | ∃ r ∈ S, r.conseq = γ})) →
+        (∀ n, IsExtension {p | ∃ i ≤ n, p ∈ Log i} S (Ext n)) →
+        ∀ (m n : ℕ) (φ : CForm A C), IsBase φ → φ ∈ Ext n → φ ∉ Ext m →
+          φ ∈ Cn {p | ∃ i ≤ n, p ∈ Log i} ∧ φ ∉ Cn {p | ∃ i ≤ m, p ∈ Log i})
+    ∧ (∀ (Log : ℕ → Set (CForm A C)) (S : Set (Rule A C))
+          (Ext : ℕ → Set (CForm A C)),
+        (∀ n, ∀ p ∈ Log n, IsBase p) → PropUniformRules S →
+        (∀ n, Consistent ({p | ∃ i ≤ n, p ∈ Log i} ∪ {γ | ∃ r ∈ S, r.conseq = γ})) →
+        (∀ n, IsExtension {p | ∃ i ≤ n, p ∈ Log i} S (Ext n)) →
+        ∀ m n : ℕ, m ≤ n → ∀ φ : CForm A C, IsBase φ → φ ∈ Ext m → φ ∈ Ext n)
+    ∧ (∀ a : A, ∃ (S : Set (Rule A C)) (E : Set (CForm A C)),
+        Monotone S ∧ IsExtension (∅ : Set (CForm A C)) S E ∧
+          E ≠ Cn ((∅ : Set (CForm A C)) ∪ {γ | ∃ r ∈ S, r.conseq = γ})) := by
+  exact ⟨fun _ _ _ hT hS hcon hE => audit hT hS hcon hE,
+         fun _ _ _ hb hS hc hE m n φ hφ h1 h2 => attribution hb hS hc hE m n φ hφ h1 h2,
+         fun _ _ _ hb hS hc hE _ _ hmn φ hφ hm => no_silent_loss hb hS hc hE hmn φ hφ hm,
+         fun a => extension_ne_Cn_consequents a⟩
+"""
+
 SPECS = [
     ("Sol_uniformity_monotone_dichotomy.lean", ["Uniformity.lean"], DICHOTOMY),
     ("Sol_uniformity_rigidity.lean",
      ["Uniformity.lean", "Rigidity.lean"], RIGIDITY),
     ("Sol_uniformity_trichotomy.lean",
      ["Uniformity.lean", "Rigidity.lean", "Trichotomy.lean"], TRICHOTOMY),
+    ("Sol_uniformity_audit.lean",
+     ["Uniformity.lean", "Rigidity.lean", "Trichotomy.lean", "Audit.lean"],
+     AUDIT),
 ]
 
 for fname, sources, thm in SPECS:

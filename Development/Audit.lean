@@ -14,7 +14,7 @@
   Two things about the route.
 
   * The bridge one first reaches for — that the extension of a monotone schema
-    is `Cn (T ∪ consequents)` — is FALSE, and `extension_ne_Cn_conseqs` below
+    is `Cn (T ∪ consequents)` — is FALSE, and `extension_ne_Cn_consequents` below
     exhibits a one-rule counterexample.  A monotone rule still has a
     prerequisite, and a rule whose prerequisite is never derived never fires,
     so its consequent need not be in the extension.  The paper states the
@@ -40,17 +40,17 @@ variable {A C : Type}
 /-! ## Consequents -/
 
 /-- The consequents of a schema, as a set of formulas. -/
-def conseqs (S : Set (Rule A C)) : Set (CForm A C) := {γ | ∃ r ∈ S, r.conseq = γ}
+def consequents (S : Set (Rule A C)) : Set (CForm A C) := {γ | ∃ r ∈ S, r.conseq = γ}
 
-theorem fired_subset_conseqs (S : Set (Rule A C)) (E X : Set (CForm A C)) :
-    fired S E X ⊆ conseqs S := by
+theorem fired_subset_consequents (S : Set (Rule A C)) (E X : Set (CForm A C)) :
+    fired S E X ⊆ consequents S := by
   rintro γ ⟨r, hr, hc, _, _⟩
   exact ⟨r, hr, hc⟩
 
 /-- Proposition-uniformity of a schema gives proposition-uniformity of its
 consequents, which is the form the monotone dichotomy wants. -/
-theorem conseqs_propUniform {S : Set (Rule A C)} (hS : PropUniformRules S) :
-    PropUniform (conseqs S) := by
+theorem consequents_propUniform {S : Set (Rule A C)} (hS : PropUniformRules S) :
+    PropUniform (consequents S) := by
   rintro s γ ⟨r, hr, rfl⟩
   exact ⟨substRule s r, hS s r hr, rfl⟩
 
@@ -60,25 +60,25 @@ Only one inclusion is available, and only one is needed. -/
 
 /-- Every stage of the construction lies inside `Cn (T ∪ consequents)`.  No
 hypothesis on the schema is required. -/
-theorem stage_subset_Cn_conseqs (T : Set (CForm A C)) (S : Set (Rule A C))
-    (E : Set (CForm A C)) : ∀ i, stage T S E i ⊆ Cn (T ∪ conseqs S) := by
+theorem stage_subset_Cn_consequents (T : Set (CForm A C)) (S : Set (Rule A C))
+    (E : Set (CForm A C)) : ∀ i, stage T S E i ⊆ Cn (T ∪ consequents S) := by
   intro i
   induction i with
   | zero => exact Cn_mono Set.subset_union_left
   | succ i ih =>
     intro p hp
     rcases hp with hp | hp
-    · have h : p ∈ Cn (Cn (T ∪ conseqs S)) := Cn_mono ih hp
+    · have h : p ∈ Cn (Cn (T ∪ consequents S)) := Cn_mono ih hp
       rwa [Cn_idem] at h
-    · exact subset_Cn _ (Or.inr (fired_subset_conseqs S E _ hp))
+    · exact subset_Cn _ (Or.inr (fired_subset_consequents S E _ hp))
 
 /-- Hence so does the extension. -/
-theorem extension_subset_Cn_conseqs {T : Set (CForm A C)} {S : Set (Rule A C)}
-    {E : Set (CForm A C)} (hE : IsExtension T S E) : E ⊆ Cn (T ∪ conseqs S) := by
+theorem extension_subset_Cn_consequents {T : Set (CForm A C)} {S : Set (Rule A C)}
+    {E : Set (CForm A C)} (hE : IsExtension T S E) : E ⊆ Cn (T ∪ consequents S) := by
   intro p hp
   rw [hE] at hp
   obtain ⟨i, hi⟩ := Set.mem_iUnion.mp hp
-  exact stage_subset_Cn_conseqs T S E i hi
+  exact stage_subset_Cn_consequents T S E i hi
 
 /-- **The reverse inclusion fails.**  A monotone rule whose prerequisite is
 never derived never fires, so its consequent need not reach the extension.
@@ -87,10 +87,10 @@ With the tautological base and the single rule `a : ⊤ / a`, the extension is
 
 This is why the identity asserted in the paper's definition of an extension
 needs restricting to prerequisite-free schemas. -/
-theorem extension_ne_Cn_conseqs (a : A) :
+theorem extension_ne_Cn_consequents (a : A) :
     ∃ (S : Set (Rule A C)) (E : Set (CForm A C)),
       Monotone S ∧ IsExtension (∅ : Set (CForm A C)) S E ∧
-        E ≠ Cn ((∅ : Set (CForm A C)) ∪ conseqs S) := by
+        E ≠ Cn ((∅ : Set (CForm A C)) ∪ consequents S) := by
   classical
   -- The valuation that falsifies every atom.
   let v : CVal A C := ⟨fun _ => false, fun _ _ => false⟩
@@ -141,13 +141,13 @@ trichotomy's symmetry hypothesis would not be available here, and the monotone
 dichotomy is the right instrument. -/
 theorem audit {T : Set (CForm A C)} {S : Set (Rule A C)} {E : Set (CForm A C)}
     (hT : ∀ p ∈ T, IsBase p) (hS : PropUniformRules S)
-    (hcon : Consistent (T ∪ conseqs S)) (hE : IsExtension T S E) :
+    (hcon : Consistent (T ∪ consequents S)) (hE : IsExtension T S E) :
     ∀ φ : CForm A C, IsBase φ → (φ ∈ E ↔ φ ∈ Cn T) := by
   intro φ hφ
   constructor
   · intro hmem
-    exact monotone_dichotomy hT (conseqs_propUniform hS) hcon φ hφ
-      (extension_subset_Cn_conseqs hE hmem)
+    exact monotone_dichotomy hT (consequents_propUniform hS) hcon φ hφ
+      (extension_subset_Cn_consequents hE hmem)
   · intro hmem
     exact Cn_subset_extension hE hmem
 
@@ -174,13 +174,13 @@ variable {Log : ℕ → Set (CForm A C)} {S : Set (Rule A C)}
   {Ext : ℕ → Set (CForm A C)}
 variable (hbase : ∀ n, ∀ p ∈ Log n, IsBase p)
 variable (hS : PropUniformRules S)
-variable (hcon : ∀ n, Consistent (logUpTo Log n ∪ conseqs S))
+variable (hcon : ∀ n, Consistent (logUpTo Log n ∪ consequents S))
 variable (hExt : ∀ n, IsExtension (logUpTo Log n) S (Ext n))
 
 include hbase hS hcon hExt
 
 /-- **The record says exactly what was logged.** -/
-theorem audit_record (n : ℕ) (φ : CForm A C) (hφ : IsBase φ) :
+theorem audit_at (n : ℕ) (φ : CForm A C) (hφ : IsBase φ) :
     φ ∈ Ext n ↔ φ ∈ Cn (logUpTo Log n) :=
   audit (logUpTo_isBase hbase n) hS (hcon n) (hExt n) φ hφ
 
@@ -191,25 +191,25 @@ are no facts in the record that no revision accounts for. -/
 theorem attribution (m n : ℕ) (φ : CForm A C) (hφ : IsBase φ)
     (hnew : φ ∈ Ext n) (hold : φ ∉ Ext m) :
     φ ∈ Cn (logUpTo Log n) ∧ φ ∉ Cn (logUpTo Log m) := by
-  refine ⟨(audit_record hbase hS hcon hExt n φ hφ).mp hnew, fun h => hold ?_⟩
-  exact (audit_record hbase hS hcon hExt m φ hφ).mpr h
+  refine ⟨(audit_at hbase hS hcon hExt n φ hφ).mp hnew, fun h => hold ?_⟩
+  exact (audit_at hbase hS hcon hExt m φ hφ).mpr h
 
 /-- **Nothing is lost silently.**  Base-language content only grows. -/
-theorem audit_monotone {m n : ℕ} (h : m ≤ n) (φ : CForm A C) (hφ : IsBase φ)
+theorem no_silent_loss {m n : ℕ} (h : m ≤ n) (φ : CForm A C) (hφ : IsBase φ)
     (hmem : φ ∈ Ext m) : φ ∈ Ext n := by
-  refine (audit_record hbase hS hcon hExt n φ hφ).mpr ?_
-  exact Cn_mono (logUpTo_mono Log h) ((audit_record hbase hS hcon hExt m φ hφ).mp hmem)
+  refine (audit_at hbase hS hcon hExt n φ hφ).mpr ?_
+  exact Cn_mono (logUpTo_mono Log h) ((audit_at hbase hS hcon hExt m φ hφ).mp hmem)
 
 end Record
 
 section Verification
 
-#print axioms extension_subset_Cn_conseqs
-#print axioms extension_ne_Cn_conseqs
+#print axioms extension_subset_Cn_consequents
+#print axioms extension_ne_Cn_consequents
 #print axioms audit
-#print axioms audit_record
+#print axioms audit_at
 #print axioms attribution
-#print axioms audit_monotone
+#print axioms no_silent_loss
 
 end Verification
 
