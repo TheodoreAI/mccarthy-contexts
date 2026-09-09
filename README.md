@@ -135,10 +135,19 @@ fault:
 has already done its work by then, so check the manifest exists and go straight
 to `lake exe cache get`.
 
-## Paper
+## Papers
 
-The accompanying paper, *Harmless and Pointless*, is in [`paper/`](paper/) as
-LaTeX source. Each of its theorems cites the Lean identifier that proves it.
+Two, both in [`paper/`](paper/) as LaTeX source.
+
+*Harmless and Pointless* (`paper.tex`) covers the tower's consistency, the cost
+of every repair to it, and the measurement of context transfer. Each of its
+theorems cites the Lean identifier that proves it.
+
+*Uniformity and Transcendence* (`uniformity.tex`) covers the monotone
+dichotomy, the trichotomy, rigidity, and the audit property. Its numbered
+results share one counter, so adding a remark renumbers everything after it —
+see [`paper/README.md`](paper/README.md) before editing, since four published
+Prove2Me nodes cite those numbers.
 
 ## On method
 

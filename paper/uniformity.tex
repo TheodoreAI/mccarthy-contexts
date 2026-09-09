@@ -1,0 +1,722 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage[margin=1.15in]{geometry}
+\usepackage{microtype}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\newcommand{\ist}{\mathrm{ist}}
+\newcommand{\Cn}{\mathrm{Cn}}
+\newcommand{\Aut}{\mathrm{Aut}}
+\newcommand{\out}{\mathrm{out}}
+\newcommand{\Lp}{L^{+}}
+
+\title{Uniformity and Transcendence\\
+\large A trichotomy for lifting schemas in the logic of context}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+McCarthy's programme for a logic of context asks for \emph{transcendence}: the
+ability to step outside any context and thereby reach conclusions unavailable
+within it. We show that transcendence is incompatible with uniformity, in a
+precise sense. A lifting schema that treats all propositions alike either
+yields nothing new at the base level, or fails to determine a unique extension,
+or is not in fact a schema but a disguised assertion. In the monotone case the
+trichotomy collapses to a dichotomy: monotone uniform schemas are always
+conservative. We further show that a schema uniform in the \emph{contexts} as
+well has a shift-invariant extension --- every level of the tower says exactly
+what every other level says --- which is McCarthy's ``pointless version''
+derived rather than stipulated. All three results identify uniformity, not
+consistency, as the binding constraint. The harmlessness of the regress is
+thereby explained: it is harmless because it is inert, and it is inert because
+it is uniform. We intend this as an explanation of why the transcendence
+programme stalled rather than a refutation of it, and we draw from it a positive
+design principle: content in a context system comes from deliberate asymmetry,
+never from the tower. Cashed out, that principle is an audit property --- a
+record whose update rule is uniform says exactly what was logged, and every fact
+in it is attributable to a revision.
+\end{abstract}
+
+\section{Introduction}
+
+The infinite tower of contexts $c_0, c_1, c_2, \dots$, in which each context is
+asserted inside the next, is consistent. That much is settled: the tower is
+satisfiable, and satisfiable transfinitely, by an evaluator respecting the
+connectives. The regress is harmless.
+
+This paper takes up the question that harmlessness leaves open. McCarthy did not
+want the tower merely to be safe; he wanted it to be \emph{productive}. Entering
+an outer context was supposed to license conclusions the inner one could not
+reach. Our results say this cannot happen, and they locate the obstruction
+precisely --- not in consistency, and not in the infinitude of the regress, but
+in the demand that a lifting rule be a \emph{rule}.
+
+Nothing below contradicts anything McCarthy asserted. The tower is consistent,
+the machinery of $\ist$ and lifting is sound, and the transcendence programme was
+always presented as preliminary and unfinished rather than as a completed
+theory. Our results supply the missing account of \emph{why} it remained
+unfinished. The analogy is with a decision problem answered in the negative: the
+question was worth asking, the answer is no, and the proof that it is no is
+itself informative about the subject.
+
+The informal claim we make rigorous is:
+
+\begin{quote}
+You may have new conclusions, or you may have a determinate answer, or you may
+have a uniform rule. You may not have all three.
+\end{quote}
+
+Section 2 fixes the framework. Section 3 proves the monotone dichotomy
+(Theorem \ref{thm:mono}). Section 4 proves the general trichotomy
+(Theorem \ref{thm:trichotomy}). Section 5 proves the rigidity theorem
+(Theorem \ref{thm:rigidity}), which recovers the copy schema from
+context-uniformity alone. Section 6 turns the negative results into a positive
+one, about records that must be auditable. Section 7 discusses the hypotheses,
+and is where a sceptical reader should begin.
+
+\section{Framework}
+
+\subsection{Languages and frames}
+
+Let $L$ be a propositional language over a countable set $A$ of atoms, closed
+under the Boolean connectives. $L$ is the \emph{base language}: the language in
+which facts about the world are stated, containing no context machinery. We
+write $\Cn$ for classical consequence.
+
+\begin{definition}[Frame]
+A \emph{frame} is a pair $F=(C,\out)$ where $C$ is a nonempty set of contexts and
+$\out\colon C \to C$ is a total injection. Totality is McCarthy's requirement
+that every context lie inside a further context; injectivity says a context has
+at most one immediate interior.
+\end{definition}
+
+Two frames matter below. The \emph{tower frame} $\mathbb{N}$ has
+$C=\{c_n : n \in \mathbb{N}\}$ and $\out(c_n)=c_{n+1}$; here $c_0$ is the unique
+non-successor. The \emph{bi-infinite frame} $\mathbb{Z}$ has $C=\{c_n : n \in
+\mathbb{Z}\}$ and the same map; here $\out$ is a bijection and no context is
+distinguished.
+
+\begin{definition}[Context language]
+$\Lp(F)$ is the least set containing $A$, closed under the Boolean connectives,
+and such that $\ist_c(\varphi) \in \Lp(F)$ whenever $c \in C$ and
+$\varphi \in \Lp(F)$.
+\end{definition}
+
+\begin{definition}[Shift]
+The \emph{shift} $\sigma_F \colon \Lp(F)\to\Lp(F)$ is defined by
+$\sigma_F(p)=p$ for $p \in A$, commutation with the connectives, and
+$\sigma_F(\ist_c(\varphi)) = \ist_{\out(c)}(\sigma_F \varphi)$.
+\end{definition}
+
+On $\mathbb{N}$ the shift is an injection whose image omits every formula whose
+outermost modality is $\ist_{c_0}$. On $\mathbb{Z}$ it is a bijection. This
+asymmetry is the whole content of Section 5.
+
+\subsection{Schemas and extensions}
+
+We allow lifting rules to be defeasible, since the interesting candidates for
+transcendence are.
+
+\begin{definition}[Schema]
+A \emph{schema} $S$ assigns to each frame $F$ a set $S_F$ of default rules
+$\dfrac{\alpha : \beta}{\gamma}$ over $\Lp(F)$, with $\alpha$ the prerequisite,
+$\beta$ the justification and $\gamma$ the consequent. A rule with
+$\beta = \top$ is \emph{monotone}; $S$ is monotone if all its rules are.
+\end{definition}
+
+\begin{definition}[Extension]\label{def:extension}
+Given a theory $T$ and a schema $S$ on $F$, a deductively closed
+$E \subseteq \Lp(F)$ is an \emph{extension} of $(T,S_F)$ if $E = \bigcup_{i}E_i$
+where $E_0 = \Cn(T)$ and
+\[
+E_{i+1} \;=\; \Cn(E_i) \;\cup\;
+\Bigl\{\gamma \;:\; \tfrac{\alpha\,:\,\beta}{\gamma}\in S_F,\;
+\alpha \in E_i,\; \neg\beta \notin E \Bigr\}.
+\]
+We count only consistent extensions. If $S$ is monotone this fixed point is
+unique; it equals $\Cn(T\cup\Gamma)$, with $\Gamma$ the set of consequents,
+when every rule is \emph{prerequisite-free} ($\alpha=\top$), but not in
+general --- see Remark~\ref{rem:prereq}.
+\end{definition}
+
+\begin{remark}[Prerequisites]\label{rem:prereq}
+A monotone rule still carries a prerequisite, and a rule whose prerequisite is
+never derived never fires. Over the tautological base the single rule
+$\frac{a\,:\,\top}{a}$ has extension $\Cn(\emptyset)$, which does not contain
+$a$, whereas $\Cn(\emptyset\cup\{a\})$ does. So the extension of a monotone
+schema is in general a proper subset of $\Cn(T\cup\Gamma)$.
+
+What does hold, for \emph{every} schema and with no hypothesis at all, is the
+inclusion $E\subseteq\Cn(T\cup\Gamma)$: the base stage is contained in it, and
+each successor stage is too, since $\Cn$ is idempotent and every fired
+consequent lies in $\Gamma$. That inclusion is all of Section~\ref{sec:records}
+needs, which is why nothing there assumes monotonicity.
+\end{remark}
+
+\begin{definition}[Conservativity]
+$S$ is \emph{conservative} over $T$ if $E \cap L = \Cn(T)\cap L$ for every
+extension $E$. \emph{Transcendence} is the failure of conservativity: some
+sentence of the base language becomes derivable that was not derivable before.
+\end{definition}
+
+We stress that conservativity is measured in $L$, not in $\Lp$. Every nontrivial
+schema adds sentences of $\Lp$ --- that is what a schema is for. The question
+McCarthy poses is whether climbing the tower tells you anything about the
+\emph{world}, and the world is described in $L$.
+
+\subsection{Uniformity}
+
+Two independent ways a purported rule can smuggle in an assertion.
+
+\begin{definition}[Proposition-uniformity]
+$S$ is \emph{proposition-uniform} if $s(S_F) \subseteq S_F$ for every
+substitution $s \colon A \to L$, extended homomorphically to $\Lp(F)$ (acting
+inside the scope of $\ist$).
+\end{definition}
+
+A lifting rule should be a rule about lifting, uniform in what is lifted. A
+``schema'' that fires only for one designated sentence $\theta$ is an assertion
+of $\theta$ wearing a rule's clothing.
+
+\begin{definition}[Context-uniformity]
+$S$ is \emph{context-uniform} if $\sigma_F^{-1}(S_F) = S_F$ for every frame $F$,
+and $S_F$ is defined for every frame.
+\end{definition}
+
+The quantification over \emph{all} frames is essential and is not a technical
+convenience; see Remark \ref{rem:definable}.
+
+\begin{definition}
+$S$ is \emph{uniform} if it is both proposition- and context-uniform.
+\end{definition}
+
+\subsection{The base theory}
+
+Throughout, $T \subseteq L$: the base theory is context-free. This is not
+cosmetic. If $T$ may itself contain $\ist$-sentences, it can supply a premise
+that a lifting rule then exports, and non-conservativity follows for a reason
+having nothing to do with the tower. See Remark \ref{rem:contextfree}.
+
+For Theorem \ref{thm:trichotomy} we need a symmetry condition on $T$.
+
+\begin{definition}[Atom automorphisms]\label{def:aut}
+For a permutation $\pi$ of $A$ and an \emph{arbitrary} function
+$\varepsilon \colon A \to \{0,1\}$, let $g_{\pi,\varepsilon}$ be the
+substitution sending the atom $a$ to $\pi(a)$ if $\varepsilon(a)=0$ and to
+$\neg\pi(a)$ if $\varepsilon(a)=1$, extended homomorphically. Each
+$g_{\pi,\varepsilon}$ is an automorphism of $L$, and
+\[
+\Aut(L) \;:=\; \{\, g_{\pi,\varepsilon} \;:\; \pi \in \mathrm{Sym}(A),\;
+\varepsilon \in \{0,1\}^{A} \,\}
+\;\cong\; \{0,1\}^{A} \rtimes \mathrm{Sym}(A)
+\]
+is a group under composition. We write $\Aut(L)_T$ for its subgroup preserving
+$\Cn(T)$. That $\varepsilon$ ranges over \emph{all} functions, not merely those
+of finite support, is essential; see Remark~\ref{rem:finitegen}.
+\end{definition}
+
+These are automorphisms of the Lindenbaum algebra of $L$, not of the algebra of
+formulas: $g_{\pi,\varepsilon}$ applied twice to the atom $a$ returns
+$\neg\neg a$, which is equivalent to $a$ but is a different formula. Nothing in
+the proofs below depends on the distinction, since every set they act on is
+deductively closed. It matters only if one wants $\Aut(L)$ to act on syntax, for
+which it suffices to let atoms carry a sign and read negation as a sign flip;
+this is what the machine-checked development does, for the reason given in
+Section~\ref{sec:formal}.
+
+Automorphisms act on formulas covariantly and hence on valuations
+contravariantly, so we use the induced left action
+$g \cdot M := (g^{-1})^{*}M$, where the pullback $h^{*}M$ is the valuation
+$a \mapsto M(h(a))$. It is characterised by
+\[
+g \cdot M \models g\varphi \quad\Longleftrightarrow\quad M \models \varphi ,
+\]
+so $\Aut(L)_T$ permutes the models of $T$.
+
+\begin{definition}[Symmetric theory]
+$T$ is \emph{symmetric} if $\Aut(L)_T$ acts transitively on the models of $T$.
+\end{definition}
+
+\begin{proposition}\label{prop:tautsym}
+The tautological theory is symmetric.
+\end{proposition}
+
+\begin{proof}
+Every valuation is a model and $\Aut(L)_{\top}=\Aut(L)$. Given valuations $M,N$,
+take $\pi=\mathrm{id}$ and $\varepsilon(a)=1$ exactly when $M(a)\neq N(a)$. Then
+$g_{\pi,\varepsilon}$ is an involution and $g_{\pi,\varepsilon}\cdot M = N$.
+\end{proof}
+
+This is the case of interest: McCarthy's question is whether the tower is by
+itself a source of new facts, so the base should be assumed to contribute
+nothing.
+
+\begin{remark}[Why generation is the wrong definition]\label{rem:finitegen}
+One is tempted to define $\Aut(L)$ as the group \emph{generated by} permutations
+of $A$ together with negations of individual atoms. That group is strictly
+smaller. Conjugating a single-atom negation by a permutation yields another
+single-atom negation, so the negations generate a normal subgroup consisting
+exactly of the $g_{\mathrm{id},\varepsilon}$ with $\varepsilon$ of finite
+support, and every element of the generated group is $g_{\pi,\varepsilon}$ with
+$\varepsilon$ finitely supported. For infinite $A$ such a group is not
+transitive on valuations: the constant-true and constant-false valuations differ
+at infinitely many atoms, and no permutation alters that. The tautological
+theory would then fail to be symmetric, and Theorem~\ref{thm:trichotomy} would
+lose the very instance it is meant to cover. Definition~\ref{def:aut} takes the
+full group instead, at no cost to the proof, which uses only transitivity and
+preservation of $\Cn(T)$.
+\end{remark}
+
+\section{The monotone case}
+
+Here uniqueness is automatic, so the trichotomy has no room to be a trichotomy.
+It collapses, and the collapse is sharp.
+
+\begin{theorem}[Monotone dichotomy]\label{thm:mono}
+Let $T \subseteq L$ be consistent and let $S$ be monotone and
+proposition-uniform. Then either $S_F$ is inconsistent, or $S$ is conservative
+over $T$.
+\end{theorem}
+
+\begin{proof}
+Let $E$ be the unique extension and suppose $\varphi \in E \cap L$ with
+$\varphi \notin \Cn(T)$. Fix a model $M \models T$ with $M \not\models \varphi$,
+and let $s$ be the substitution sending each atom $p$ to $\top$ if $M \models p$
+and to $\bot$ otherwise.
+
+Since $E = \Cn(T \cup \Gamma)$ for $\Gamma$ the set of consequents of $S_F$,
+there are $\psi_1,\dots,\psi_m \in T$ and $\gamma_1,\dots,\gamma_k \in \Gamma$
+with
+\[
+\psi_1,\dots,\psi_m,\gamma_1,\dots,\gamma_k \vdash \varphi .
+\]
+Substitution preserves derivability, so
+\[
+s\psi_1,\dots,s\psi_m,\,s\gamma_1,\dots,s\gamma_k \vdash s\varphi .
+\]
+Each $\psi_i \in T \subseteq L$ holds in $M$, so $s\psi_i$ is a closed Boolean
+combination of $\top,\bot$ with value $\top$; each is a tautology. Dually
+$M \not\models \varphi$ gives $s\varphi \equiv \bot$. By proposition-uniformity
+each $s\gamma_j$ is again a consequent of $S_F$. Hence
+$\Gamma \vdash \bot$, so $S_F$ is inconsistent.
+\end{proof}
+
+\begin{corollary}\label{cor:mono}
+A consistent monotone uniform schema cannot deliver transcendence. Since it also
+has exactly one extension, uniqueness and novelty are outright incompatible in
+the monotone setting.
+\end{corollary}
+
+\begin{remark}
+Context-uniformity is not used in Theorem \ref{thm:mono}. Only the treatment of
+propositions matters. This is the first indication that the level dimension is
+not where the obstruction lives.
+\end{remark}
+
+\section{The general case}
+
+\begin{theorem}[Trichotomy]\label{thm:trichotomy}
+Let $T \subseteq L$ be consistent and symmetric, let $F$ be any frame, and let
+$S$ be any schema. Then at least one of the following holds.
+\begin{itemize}
+\item[\textup{(C)}] $S$ is conservative over $T$.
+\item[\textup{(U)}] $(T,S_F)$ has a number of consistent extensions different
+from one --- zero, or more than one.
+\item[\textup{(P)}] $S$ is not proposition-uniform.
+\end{itemize}
+\end{theorem}
+
+\begin{proof}
+Assume (U) and (P) fail; we derive (C). Let $E$ be the unique consistent
+extension.
+
+\emph{Step 1: $E$ is invariant.}
+Let $g \in \Aut(L)_T$, extended to $\Lp(F)$ by acting inside the scope of each
+$\ist_c$ and fixing every context index. Because $g$ is invertible and $S$ is
+proposition-uniform we have $g(S_F) \subseteq S_F$ and
+$g^{-1}(S_F)\subseteq S_F$, hence $g(S_F)=S_F$. Also $g(\Cn(T))=\Cn(T)$ by
+choice of $g$. Since $g$ is an automorphism of $\Lp(F)$ it commutes with $\Cn$
+and preserves consistency, so it carries the fixed-point construction to itself:
+$g(E)$ is a consistent extension. By uniqueness $g(E)=E$.
+
+\emph{Step 2: invariance forces conservativity.}
+Suppose $\varphi \in E \cap L$ with $\varphi \notin \Cn(T)$, and fix
+$M \models T$ with $M \not\models \varphi$. Let $N$ be any model of $T$. By
+symmetry there is $g \in \Aut(L)_T$ with $gM = N$, and then
+$N \not\models g\varphi$, since $g$ is an isomorphism of the satisfaction
+relation. By Step 1, $g\varphi \in E$.
+
+Thus $\{g\varphi : g \in \Aut(L)_T\} \subseteq E \cap L$, and this set is
+falsified at every model of $T$. Hence $T \cup \{g\varphi\}_g$ is unsatisfiable,
+so $E \supseteq \Cn(T \cup \{g\varphi\}_g)$ is inconsistent, contradicting our
+choice of $E$. Therefore $E \cap L = \Cn(T)\cap L$, which is (C).
+\end{proof}
+
+\begin{remark}
+The three corners are jointly exhaustive and individually occupied. The copy
+schema occupies (C). A lifting rule with two conflicting destinations and no
+priority between them occupies (U). Example \ref{ex:theta} occupies (P).
+\end{remark}
+
+\begin{example}[The disguised assertion]\label{ex:theta}
+Fix $\theta \in L$ with $\theta \notin \Cn(T)$ and let
+$S_F = \{\ist_c(\theta) : c \in C\}$ together with the copy and an exit rule.
+This is monotone, hence has exactly one extension; it is shift-invariant, hence
+context-uniform; and it yields $\theta$. It is not proposition-uniform, and this
+is the only hypothesis it violates. It shows that (P) cannot be weakened to
+context-uniformity alone, and it is the counterexample a referee will construct
+first.
+\end{example}
+
+\section{Rigidity: recovering the copy}
+
+Theorems \ref{thm:mono} and \ref{thm:trichotomy} say nothing new arrives at the
+base. A stronger structural fact holds once contexts are treated uniformly: the
+levels become indistinguishable from one another.
+
+\begin{theorem}[Rigidity]\label{thm:rigidity}
+Let $T \subseteq L$ be consistent and let $S$ be context-uniform with a unique
+consistent extension $E$ on $F$. Then $\sigma_F^{-1}(E) = E$. Consequently, for
+all $\varphi \in \Lp(F)$ and all $c$,
+\[
+\ist_c(\varphi) \in E \quad\Longleftrightarrow\quad
+\ist_{\out(c)}(\sigma_F\varphi) \in E ,
+\]
+and in particular, for $\varphi \in L$, where $\sigma_F$ acts as the identity,
+\[
+\ist_c(\varphi) \in E \quad\Longleftrightarrow\quad
+\ist_{\out(c)}(\varphi) \in E .
+\]
+Every level of the tower therefore carries the same content read through the
+shift, and literally the same content about the base language.
+\end{theorem}
+
+\begin{proof}
+Write $\sigma=\sigma_F$. We claim $\sigma^{-1}(E)$ is an extension of
+$(T,S_F)$.
+
+It contains $T$, since $\sigma$ fixes $L$ pointwise and $T\subseteq L$. It is
+deductively closed: $\sigma$ is an injective homomorphism commuting with the
+connectives, so if $\sigma^{-1}(E) \vdash \chi$ then $E \vdash \sigma\chi$,
+whence $\sigma\chi \in E$ and $\chi \in \sigma^{-1}(E)$. It is closed under
+$S_F$: if $\frac{\alpha:\beta}{\gamma} \in S_F$ with
+$\alpha \in \sigma^{-1}(E)$ and $\neg\beta \notin \sigma^{-1}(E)$, then by
+context-uniformity $\frac{\sigma\alpha:\sigma\beta}{\sigma\gamma} \in S_F$, and
+$\sigma\alpha \in E$, $\neg\sigma\beta \notin E$; so $\sigma\gamma \in E$ and
+$\gamma \in \sigma^{-1}(E)$. Groundedness is inherited stagewise by the same
+argument.
+
+It is consistent, since $\bot \in \sigma^{-1}(E)$ would give
+$\bot = \sigma\bot \in E$.
+
+By uniqueness $\sigma^{-1}(E) = E$; that is, $\chi \in E$ iff $\sigma\chi \in E$.
+Taking $\chi = \ist_c(\varphi)$ and using
+$\sigma(\ist_c(\varphi)) = \ist_{\out(c)}(\sigma\varphi)$ gives the first
+displayed equivalence, and $\sigma\!\restriction\! L = \mathrm{id}$ gives the
+second.
+\end{proof}
+
+\begin{remark}[The shift cannot be dropped]
+In the first display the right-hand side must be $\sigma_F\varphi$, not
+$\varphi$. The shift relabels every context index occurring inside $\varphi$, so
+$\ist_c(\varphi)$ and $\ist_{\out(c)}(\varphi)$ are $\sigma_F$-related only when
+$\varphi$ contains no occurrence of $\ist$ --- that is, only on the base
+language. For $\varphi = \ist_{c}(p)$ the unshifted equivalence would assert a
+coincidence between two unrelated pairs of levels, and nothing in the hypotheses
+supplies it.
+\end{remark}
+
+\begin{corollary}
+Under the hypotheses of Theorems \ref{thm:trichotomy} and \ref{thm:rigidity}
+together, the unique extension is the copy: it adds no base-level fact and no
+level-to-level variation. This is McCarthy's ``pointless version,'' obtained as
+a conclusion rather than adopted as a stipulation.
+\end{corollary}
+
+\begin{remark}[The definable-$c_0$ loophole]\label{rem:definable}
+On the tower frame $\mathbb{N}$ the context $c_0$ is definable as the unique
+non-successor, so a schema may name it without using a constant --- for
+instance, ``at the innermost context, the set of truths is complete.'' Such a
+schema satisfies $\sigma^{-1}(S)=S$ on $\mathbb{N}$ vacuously at the relevant
+place and would evade a frame-local definition of context-uniformity.
+
+Quantifying over all frames closes this. On $\mathbb{Z}$ every context is a
+successor, the definition ``innermost'' has empty extension, and the schema goes
+silent. A schema whose content depends on there being a bottom is relying on
+structure the theory never promised: McCarthy's own axiom is that every context
+has an outer one, never that some context has no inner one. The $\mathbb{Z}$
+frame is not a trick; it is the theory taken at its word.
+
+Note also that on $\mathbb{Z}$ the shift is a bijection, so
+Theorem \ref{thm:rigidity} yields invariance under a genuine automorphism rather
+than a mere embedding.
+\end{remark}
+
+\section{Records: the principle cashed out}\label{sec:records}
+
+The results so far are limitative. They have a positive corollary, and it is
+worth stating as a theorem rather than as advice: if no content-blind rule can
+generate content, then every fact a context system delivers is traceable to
+something a person put there deliberately. The natural object to say this about
+is a record that is revised over time and has to be auditable.
+
+Read the contexts as revisions. At revision $n$ a set $\Lambda_n\subseteq L$ of
+\emph{entries} is logged. Entries lie in the base language because they are
+claims about the world, not about the record --- the same context-freeness
+Theorem~\ref{thm:mono} requires, arrived at for an independent reason. Write
+$\Lambda_{\le n}=\bigcup_{i\le n}\Lambda_i$, fix an update schema $S$, and let
+$E_n$ be an extension of $(\Lambda_{\le n},S_F)$.
+
+\begin{theorem}[Audit]\label{thm:audit}
+Let $S$ be proposition-uniform and let $\Lambda_{\le n}\cup\Gamma$ be
+consistent, where $\Gamma$ is the set of consequents of $S_F$. Then for every
+$\varphi\in L$,
+\[
+\varphi\in E_n \quad\Longleftrightarrow\quad \varphi\in\Cn(\Lambda_{\le n}).
+\]
+\end{theorem}
+
+\begin{proof}
+Right to left, $E_n\supseteq\Cn(\Lambda_{\le n})$ holds by construction, since
+$E_0=\Cn(\Lambda_{\le n})$ is the base stage. Left to right, every stage lies
+inside $\Cn(\Lambda_{\le n}\cup\Gamma)$ by Remark~\ref{rem:prereq}, so
+$E_n\subseteq\Cn(\Lambda_{\le n}\cup\Gamma)$; Theorem~\ref{thm:mono}, applied
+with base theory $\Lambda_{\le n}$ and consequents $\Gamma$, returns
+$\varphi\in\Cn(\Lambda_{\le n})$.
+\end{proof}
+
+\begin{corollary}[Attribution]\label{cor:attribution}
+If $\varphi\in L$ lies in $E_n$ but not in $E_m$, then
+$\varphi\in\Cn(\Lambda_{\le n})$ and $\varphi\notin\Cn(\Lambda_{\le m})$. Some
+entry logged after revision $m$ is therefore necessary for $\varphi$.
+\end{corollary}
+
+\begin{corollary}[No silent loss]\label{cor:noloss}
+For $m\le n$, every base sentence of $E_m$ lies in $E_n$.
+\end{corollary}
+
+Together: the record says exactly what was logged, it never says less than it
+did, and nothing appears in it that no revision accounts for. That is the
+property an auditor is actually asking after, and it is now a consequence of
+the monotone dichotomy rather than a design aspiration.
+
+\begin{remark}[Why not the trichotomy]
+Theorem~\ref{thm:trichotomy} cannot be used here. It requires the base theory
+to be symmetric, and a log is the opposite of symmetric --- it is a specific
+claim about the world, which is the whole point of keeping one.
+Theorem~\ref{thm:mono} asks only for context-freeness, which a log satisfies by
+construction. The negative result with the weaker hypothesis is the one that
+turns out to be useful.
+\end{remark}
+
+\begin{remark}[The schema may be defeasible]
+Theorem~\ref{thm:audit} does not assume $S$ is monotone. Only the inclusion of
+Remark~\ref{rem:prereq} is used, and that holds for any schema. So the
+practically interesting update rules --- carry the previous value forward unless
+something supersedes it --- are covered.
+
+Non-uniqueness is not an obstacle either, merely a different fact. If
+$(\Lambda_{\le n},S_F)$ has several consistent extensions, the theorem holds of
+each: the record could have come out differently, but whichever way it came out,
+it says nothing about the world beyond the log. What multiple extensions cost
+is reproducibility, not auditability.
+\end{remark}
+
+\begin{remark}[The hypotheses are tight]\label{rem:tight}
+Each hypothesis of Theorem~\ref{thm:audit} has a counterexample on the other
+side of it, and each corresponds to a recognisable way of building a record
+system wrongly.
+
+Drop context-freeness of the entries and the theorem fails by
+Remark~\ref{rem:contextfree}: a log that already speaks of revisions can supply
+a premise the schema exports.
+
+Drop proposition-uniformity and it fails by Example~\ref{ex:theta}: the schema
+is then an assertion in disguise, and it is the assertion, not the record, that
+is doing the work.
+
+Add a completeness claim --- an update rule saying that revision $n$ contains
+everything true at $n-1$ \emph{and nothing else} --- and it fails for a reason
+established in the companion development, where reifying the set of truths is
+shown to be conservative but asserting that set complete is shown not to be.
+This is the closed-world cache: treating the absence of an entry as the presence
+of its negation.
+
+Drop consistency of $\Lambda_{\le n}\cup\Gamma$ and everything follows, which is
+not a subtlety but is worth naming: a log that contradicts what the update rule
+could ever say is a record that proves anything.
+\end{remark}
+
+\section{Discussion}
+
+\subsection{What the programme got right}
+
+It would be a misreading to take the above as a refutation. Three points deserve
+to be stated plainly.
+
+First, the impossibility is an impossibility for \emph{uniform} rules, and the
+uniformity conditions are ones the programme itself would have insisted on. A
+lifting axiom that fires only for a designated sentence is not the kind of thing
+McCarthy was looking for. The theorems therefore respect the programme's own
+standards; they show that those standards, honestly applied, exclude the
+outcome.
+
+Second, the copy schema deserves better than the label ``pointless.'' Judged as
+a source of new theorems it is empty, and that judgment is correct. Judged as a
+guarantee of stability it is exactly what one wants: a system whose successive
+contexts are faithful copies of their predecessors cannot silently revise itself.
+Where the requirement is the absence of drift rather than the production of
+novelty --- persistent records, audit trails, any setting in which a commitment
+made earlier must still mean the same thing later --- inertness is the
+deliverable and not the defect. The copy schema is the formal content of that
+guarantee, and Theorem \ref{thm:rigidity} shows it is not merely one option among
+many but the forced consequence of treating contexts uniformly.
+
+Third, and most usefully, the trichotomy converts a negative result into a
+design principle. If uniform rules cannot generate content, then every genuine
+inference a context system performs is traceable to an asymmetry someone put
+there on purpose: a domain axiom, a priority ordering, a distinguished context, a
+base theory that is not symmetric. This is a sharper piece of guidance than the
+transcendence hope ever provided, because it tells the designer exactly where to
+look when a system draws a conclusion nobody intended. The answer is never the
+tower.
+
+\subsection{What is doing the work}
+
+The obstruction is not consistency. The tower is consistent, at every finite and
+transfinite stage, and no result above uses the failure of consistency anywhere.
+It is not the infinitude of the regress either: Theorem \ref{thm:mono} never
+mentions the frame.
+
+The obstruction is uniformity. A lifting rule earns the name ``rule'' by being
+indifferent to which proposition it lifts. That indifference is exactly what
+prevents it from delivering a particular new fact --- if it delivers $\varphi$
+it must, under substitution, deliver every substitution instance of $\varphi$,
+and those are jointly unsatisfiable whenever $\varphi$ is not already forced.
+
+The regress is harmless, then, for a reason more specific than consistency. It
+is harmless because it is inert, and it is inert because it is uniform.
+
+\subsection{Where transcendence can still live}
+
+The theorems are not a proof that context logic is useless; they delimit where
+its content can come from. Three doors remain open, corresponding to the three
+corners.
+
+\emph{Through (U).} Give up uniqueness. Multiple extensions are not a defect if
+one is prepared to reason about all of them, or to impose priorities
+extra-logically. This is the standard nonmonotonic bargain, and the price is
+that ``what follows'' becomes route-dependent: the same fact may arrive
+guaranteed by one path and contingent by another.
+
+\emph{Through (P).} Give up uniformity, deliberately and visibly. Domain axioms
+that name particular propositions or particular contexts are perfectly
+legitimate; they are simply assertions, and should be labelled as such rather
+than presented as logical machinery. Much of what has been called a lifting
+axiom in the literature is of this kind.
+
+\emph{Through the base.} Enrich $T$ so that it is not symmetric. Real
+applications do this constantly, and Theorem \ref{thm:trichotomy} then does not
+apply. What our results show is that the novelty in such a system comes from the
+asymmetry of $T$, not from the tower.
+
+\subsection{Hypotheses a referee will press}
+
+\begin{remark}[Context-freeness of $T$]\label{rem:contextfree}
+If $T \not\subseteq L$ the substitution argument of Theorem \ref{thm:mono}
+breaks at the step where $s\psi_i$ is shown tautologous, and the theorem is
+false: take $T = \{\ist_{c_1}(\theta)\}$ with an exit rule. We regard this as
+the correct scope rather than a limitation --- the question is what the tower
+contributes, and a base theory already speaking of contexts has prejudged it.
+\end{remark}
+
+\begin{remark}[Symmetry of $T$]
+Symmetry is the one hypothesis of Theorem \ref{thm:trichotomy} that is not
+forced by the subject matter, and it is where further work should go. It is used
+only in Step 2, and only to move an arbitrary model of $T$ to a fixed one. Any
+condition guaranteeing that $\Cn(T)$ is the largest $\Aut(L)_T$-invariant
+consistent deductively closed set would serve. We do not know the optimal
+hypothesis.
+\end{remark}
+
+\begin{remark}[Propositional setting]
+We work propositionally. The substitution argument should survive the passage to
+first-order, with substitutions of formulas for predicate letters in place of
+substitutions for atoms, but the automorphism group in
+Theorem \ref{thm:trichotomy} becomes more delicate and we have not checked it.
+\end{remark}
+
+\subsection{Relation to the machine-checked development}\label{sec:formal}
+
+All three theorems above are now formalized in Lean 4 against Mathlib, in
+\texttt{Development/\allowbreak Uniformity.lean},
+\texttt{Development/\allowbreak Rigidity.lean} and
+\texttt{Development/\allowbreak Trichotomy.lean}. The formalization is semantic throughout:
+$\Cn$ is truth in every valuation rather than derivability. Four things it
+established are worth recording here, because three of them revise claims made
+above.
+
+\emph{Theorem \ref{thm:mono} needs neither a proof calculus nor compactness.}
+The proof in Section 3 extracts a finite derivation and substitutes into it. The
+machine-checked proof instead composes valuations: substitution and evaluation
+commute, in the sense that $v \models s\varphi$ exactly when $s^{*}v \models
+\varphi$ for the pulled-back valuation $s^{*}v$, and the theorem is eight lines
+from there. The frame is absent from the statement and the proof alike --- no
+$\out$ map occurs --- which is stronger than the remark following the theorem.
+
+\emph{Theorem \ref{thm:rigidity} is proved for frames whose map is a
+bijection.} Surjectivity is used twice, and neither use is removable from the
+present argument. It is needed for $\Cn$ to commute with $\sigma^{-1}$, since
+every model of $\sigma^{-1}(X)$ must be the image of a model of $X$; and it is
+needed in the stage construction, where a rule of $S_F$ whose consequent lies
+outside the image of $\sigma$ has no preimage rule to fire. The second is
+exactly what the clause ``groundedness is inherited stagewise by the same
+argument'' passes over. We do not know whether the theorem holds for a merely
+injective frame map. By Remark \ref{rem:definable} the bi-infinite frame, where
+the shift is a bijection, is the case carrying the content.
+
+\emph{The compactness step in Theorem \ref{thm:trichotomy} does not exist.}
+Step 2 above collects the orbit $\{g\varphi\}$, observes that
+$T \cup \{g\varphi\}_g$ is unsatisfiable, and appeals to compactness to convert
+that into inconsistency. Semantically there is nothing to convert: a theory with
+no model is inconsistent by definition. The formalized argument does not even
+form the orbit. It takes the model $v$ of the extension --- which is a model of
+$T$, since the extension contains $\Cn(T)$ --- and the single $g$ carrying the
+counter-model $M$ to $v$, and derives that $g\varphi$ is both in the extension
+and false in $v$. The claim that this is the only place where the infinite index
+set does any work should be withdrawn: it does none.
+
+\emph{Step 1 of Theorem \ref{thm:trichotomy} and Theorem \ref{thm:rigidity} are
+one lemma.} Both assert that an automorphism preserving $\Cn(T)$ and preserving
+the schema carries extensions to extensions, so that uniqueness forces
+invariance. The development states this once, for an arbitrary automorphism of
+the context language realised on valuations, and obtains rigidity by
+instantiating it at the shift and Step 1 by instantiating it at an atom
+automorphism.
+
+Two further points. Formalizing Step 1 is what forced the signed-atom syntax
+mentioned after Definition \ref{def:aut}: the preimage of the schema under an
+element of $\Aut(L)$ must be the schema \emph{as a set of rules}, and that fails
+if the group acts only up to equivalence. And the assertion in Definition
+\ref{def:extension} that a monotone schema has a unique fixed point is proved
+rather than assumed, as is the consistency of the copy schema, so that none of
+the three theorems is about an empty class of schemas.
+
+The corners are occupied. The copy schema is shown to lie in (C) by the
+trichotomy itself rather than by direct computation; the earlier development
+supplies (U) and (P) through explicit multi-extension and route-sensitivity
+constructions.
+
+\end{document}
