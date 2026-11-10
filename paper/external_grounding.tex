@@ -1,0 +1,667 @@
+\documentclass[11pt]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage[margin=1.1in]{geometry}
+\usepackage{microtype}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+
+% ---- theorem environments -------------------------------------------------
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\emergencystretch=3em
+
+\newcommand{\leanref}[1]{%
+  \par\smallskip\noindent{\footnotesize\ttfamily\raggedright #1\par}\smallskip}
+
+% ---- notation -------------------------------------------------------------
+\newcommand{\ist}{\mathrm{ist}}
+\newcommand{\Cn}{\mathrm{Cn}}
+\newcommand{\Code}{\mathrm{Code}}
+\newcommand{\eval}{\mathrm{eval}}
+\newcommand{\evaln}{\mathrm{evaln}}
+\newcommand{\Spec}{\mathrm{Spec}}
+\newcommand{\Os}{\mathrm{Os}}
+\newcommand{\Ax}{\mathrm{Ax}}
+\newcommand{\Ext}{\mathrm{Ext}}
+\newcommand{\LiftAx}{\mathrm{LiftAx}}
+\newcommand{\CForm}{\mathrm{CForm}}
+\newcommand{\CVal}{\mathrm{CVal}}
+\newcommand{\Rule}{\mathrm{Rule}}
+\newcommand{\IsBase}{\mathrm{IsBase}}
+\newcommand{\PropUniform}{\mathrm{PropUniform}}
+\newcommand{\PropUniformRules}{\mathrm{PropUniformRules}}
+\newcommand{\IsExtension}{\mathrm{IsExtension}}
+\newcommand{\Consistent}{\mathrm{Consistent}}
+\newcommand{\Models}{\mathrm{Models}}
+\newcommand{\Rnonalg}{R_{\mathrm{nonalg}}}
+\newcommand{\Ralg}{R_{\mathrm{alg}}}
+\newcommand{\MToE}{M_{\mathrm{ToE}}}
+\newcommand{\creal}{c_{\mathrm{reality}}}
+
+\title{\textbf{On the Necessity of External Semantic Oracles in\\
+Autonomous Software Engineering Systems}\\[0.35em]
+\large A Meta-Theoretic Analysis and Lean 4 Mechanization via Context Logic,\\
+Tarski's Undefinability, and Relativized Computability}
+
+\author{Mateo Estrada}
+\date{November 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Recent advances in Large Language Models (LLMs) and autonomous coding agents have
+prompted conjectures that software verification, specification synthesis, and
+iterative repair can be reduced to a closed, self-verifying computational loop.
+In this paper, we prove that such closure is mathematically impossible for any
+non-trivial software domain. By modeling an autonomous coding pipeline as an
+effective formal system $F_c = (L_c, \Sigma_c, \Ralg)$ localized within a
+McCarthy context $c$, we synthesize results from G\"odel's Second Incompleteness
+Theorem, Tarski's Undefinability Theorem, Rice's Theorem, and Reiter's default
+logic over stratified context towers. We prove the \emph{Theorem of Necessary
+External Grounding}: no bounded algorithmic execution loop can internally decide
+non-trivial semantic specifications across finite compositions of computable
+sub-oracles (including bounded-step test harnesses), nor can any
+proposition-uniform self-reflection schema certify alignment with non-stationary
+operational environments without collapsing into conservative syntactic
+consequence $\Cn(\Sigma_c)$. Consequently, scaling model capacity or
+internalizing deterministic verification sub-oracles merely shifts the
+undecidability boundary within the effective closure, permanently requiring a
+non-uniform external semantic oracle ($\Rnonalg$) operating in a supervisory
+meta-theory $\MToE$. All lemmas and the main theorem are machine-checked in
+Lean~4 against Mathlib without \texttt{sorry} or custom axioms; the verified
+development is publicly archived on Prove2Me
+(\url{https://prove2.me/theorems/a71af5a0-3cd4-4e9c-8d96-bfbd945414d4}) and at
+\url{https://github.com/TheodoreAI/mccarthy-contexts}.
+
+\smallskip
+\noindent\textbf{Keywords:} formal verification, autonomous software agents,
+Lean~4 theorem proving, Rice's theorem, Tarski undefinability, McCarthy context
+logic, Reiter default logic, human-in-the-loop.
+\end{abstract}
+
+% ===========================================================================
+\section{Introduction}
+
+Recent advances in Large Language Models (LLMs) and autonomous coding agents have
+prompted conjectures that software verification, specification synthesis, and
+iterative repair can be reduced to a closed, self-verifying computational loop.
+The intuition behind this conjecture is straightforward: when a code generator
+makes an error, an automated compiler, static analyzer, type checker, or test
+runner can catch the failure and feed the diagnostic back into the model until
+all checks pass. It is natural to ask whether adjoining enough automated
+verifiers and self-critique stages eventually closes the loop, allowing the
+system to certify its own semantic correctness without human intervention.
+
+In this paper, we prove that such closure is mathematically impossible for any
+non-trivial software domain. By modeling an autonomous coding pipeline as an
+effective formal system $F_c = (L_c, \Sigma_c, \Ralg)$ localized within a
+McCarthy context $c$ \cite{mccarthy93}, we synthesize results from G\"odel's
+Second Incompleteness Theorem \cite{godel31}, Tarski's Undefinability Theorem
+\cite{tarski36}, Rice's Theorem \cite{rice53}, and Turing's relativized oracle
+hierarchy \cite{turing39}. Furthermore, we draw upon recent developments in
+physical meta-theory by Faizal et al.\ \cite{faizal25}, who demonstrated that
+algorithmic foundational structures in quantum gravity are intrinsically
+incomplete and require external non-algorithmic understanding to avoid epistemic
+collapse.
+
+We prove and fully mechanize in Lean~4 \cite{lean4,mathlib20} the \emph{Theorem
+of Necessary External Grounding}: no bounded algorithmic execution loop can
+internally decide its own semantic alignment predicate $T_c$ across non-trivial
+program behaviors or certify alignment with non-stationary operational
+environments under uniform reflection rules without collapsing semantic truth
+into syntactic derivability. Specifically, scaling model parameter capacity or
+internalizing finitely many computable sub-oracles (such as compilers, static
+linters, and bounded-step test suites) leaves the composite decision procedure
+computable and therefore subject to Rice's theorem. Simultaneously, on the
+logical side, any self-reflection mechanism governed by proposition-uniform
+default lifting rules \cite{reiter80} is conservative over the base
+specification $\Sigma_c$: when operational reality $\creal$ drifts away from a
+countermodel of $\Sigma_c$, the target requirement becomes strictly undecidable
+inside the closed loop. Restoring soundness and completeness for the drifted
+requirement permanently requires a non-uniform external semantic oracle
+($\Rnonalg$) operating in a supervisory meta-theory $\MToE$.
+
+To ensure that these claims rest on exact mathematical foundations rather than
+informal analogy, we formalize the entire development in Lean~4 over concrete
+data types: partial recursive program codes ($\Code$, i.e.\
+\texttt{Nat.Partrec.Code} in Mathlib) for the computability layer, and the modal
+context calculus $\CForm\,A\,C$ with Reiter fixed-point extensions for the
+meta-theoretic layer. Every theorem in Sections~\ref{sec:lemmas} and
+\ref{sec:main} carries the exact Lean~4 identifier from the verified repository.
+
+% ===========================================================================
+\section{Formal Preliminaries \& Context Architecture}\label{sec:prelim}
+
+\subsection{Two-Tiered Agent and Supervisory Architecture}
+
+Let an autonomous software generation and verification agent operating within a
+bounded context $c$ be defined as an effective formal system $F_c$, paired with
+an overarching supervisory meta-theory $\MToE$:
+\[
+  F_c = \bigl(L_c,\; \Sigma_c,\; \Ralg\bigr)
+  \qquad\text{and}\qquad
+  \MToE = \bigl(L_c \cup \{T\},\; \Sigma_c \cup \Sigma_T,\; \Ralg \cup \Rnonalg\bigr).
+\]
+The components of this two-tiered architecture are defined as follows:
+\begin{itemize}[leftmargin=1.4em]
+  \item \textbf{Object Language ($L_c$):} The formal, recursively enumerable
+    language comprising source tokens, abstract syntax trees (ASTs),
+    intermediate representations, and base propositions expressible within
+    context $c$.
+  \item \textbf{Computable Axiom Set ($\Sigma_c$ / $\Ax$):} The set of local
+    assumptions governing $c$, including frozen model parameters, system
+    prompts, context-window state, and existing context-free specifications.
+  \item \textbf{Algorithmic Inference and Verification Rules ($\Ralg$):} The
+    effective deduction, verification, and state-transition procedures available
+    inside the loop (autoregressive token sampling, static type deduction,
+    deterministic compilation, and bounded-step test execution).
+  \item \textbf{Context-Indexed Truth Predicate ($T$ / $\ist(c, p)$):} Following
+    McCarthy \cite{mccarthy93}, we bind the external truth predicate
+    $T(\ulcorner p \urcorner)$ to a relational context assertion
+    $\ist(\creal, p)$, denoting that proposition $p \in L_c$ holds in the target
+    operational domain $\creal$.
+  \item \textbf{Non-Effective Supervisory Oracle ($\Rnonalg$) \& Lifting Axioms
+    ($\Sigma_T$ / $\LiftAx$):} The external inference source residing in an outer
+    meta-context $c'$ ($c \subset c'$) that certifies semantic truths unprovable
+    in $F_c$ and injects verified lifting axioms
+    $\LiftAx = \{\ist(\creal, G_*),\; \ist(\creal, G_*) \to G_*\}$ across context
+    boundaries.
+\end{itemize}
+
+\subsection{Concrete Computability and Context-Logic Representations}
+
+To preclude vacuous formalization, our Lean~4 development instantiates both
+tiers over concrete mathematical structures rather than uninterpreted wrapper
+axioms:
+
+\begin{definition}[Program Codes, Evaluators, and Verification Pipelines]
+Let $\Code$ denote the inductive type \texttt{Nat.Partrec.Code} of partial
+recursive program codes over $\mathbb{N}$, equipped with the universal partial
+evaluator $\eval : \Code \to \mathbb{N} \rightharpoonup \mathbb{N}$ and the
+bounded-step evaluator $\evaln : \mathbb{N} \to \Code \to \mathbb{N} \to
+\mathrm{Option}\,\mathbb{N}$. A subset $\Spec \subseteq \Code$ is a
+\emph{semantic specification} if it respects extensional equivalence:
+\[
+  \forall c_1, c_2 \in \Code,\quad
+  \eval(c_1) = \eval(c_2) \implies (c_1 \in \Spec \iff c_2 \in \Spec).
+\]
+It is \emph{non-trivial} if there exist $c_{\mathrm{yes}} \in \Spec$ and
+$c_{\mathrm{no}} \notin \Spec$. Given a computable base verifier
+$d_0 : \Code \to \mathrm{Bool}$ and a finite list of internalized computable
+sub-oracles $\Os = [O_1, \dots, O_m]$ with each $O_i : \Code \to \mathrm{Bool}$,
+the \emph{conjunctive verification pipeline} $P_{\Os} : \Code \to \mathrm{Bool}$
+is the left fold
+\[
+  P_{\Os}(c) \;=\; \Os.\mathrm{foldl}\bigl(\lambda\, b\, O \Rightarrow b \mathbin{\&\&} O(c),\; d_0(c)\bigr).
+\]
+\end{definition}
+
+\begin{definition}[Modal Context Language and Proposition-Uniform Default Extensions]
+Fix a type $A$ of base atoms and a type $C$ of context indices. The modal
+context language $\CForm\,A\,C$ (defined in
+\texttt{Def\_TranscendenceTowerContextUniformity}) is generated inductively by
+signed atoms $\mathrm{atom}^+(a)$ and $\mathrm{atom}^-(a)$, truth constants
+$\top, \bot$, Boolean connectives $\neg, \wedge, \vee, \to$, and the context
+modality $\ist(c, \varphi)$ for $c \in C$. A formula $\varphi \in \CForm\,A\,C$
+is \emph{base} ($\IsBase(\varphi)$) if it contains no occurrences of $\ist$.
+
+A valuation $v \in \CVal\,A\,C$ assigns a Boolean truth value $v.\mathrm{atom}(a)$
+to each atom $a \in A$ and a modal truth table $v.\mathrm{ist}(c, \varphi)$ to
+each context-formula pair, inducing recursive evaluation $\eval(v, \varphi) \in
+\mathrm{Bool}$ and semantic consequence $\varphi \in \Cn(\Gamma) \iff
+\forall v,\; (\Models(\Gamma, v) \implies \eval(v, \varphi) = \mathsf{true})$.
+
+A set of formulas $\Gamma \subseteq \CForm\,A\,C$ is \emph{proposition-uniform}
+($\PropUniform(\Gamma)$) if it is closed under arbitrary base-formula
+substitutions $\sigma : A \to \CForm\,A\,C$ mapping atoms to base formulas:
+\[
+  \forall \varphi \in \Gamma,\;\forall \sigma : A \to \CForm\,A\,C,\quad
+  (\forall a,\; \IsBase(\sigma(a))) \implies \mathrm{subst}(\sigma, \varphi) \in \Gamma.
+\]
+A Reiter default rule $r \in \Rule\,A\,C$ has a prerequisite $r.\mathrm{prereq}$,
+justifications $r.\mathrm{justs}$, and consequent $r.\mathrm{conseq}$. A rule
+schema $S \subseteq \Rule\,A\,C$ is \emph{proposition-uniform}
+($\PropUniformRules(S)$) if substituting base formulas for atoms across all three
+components of any $r \in S$ yields another rule in $S$. Finally, $\Ext$ is a
+\emph{Reiter extension} of $(\Ax, S)$, written $\IsExtension(\Ax, S, \Ext)$, if
+$\Ext = \bigcup_{i \in \mathbb{N}} E_i$ for the Reiter stage hierarchy
+$E_0 = \Cn(\Ax)$ and
+\[
+  E_{i+1} = \Cn\!\Bigl(E_i \cup \bigl\{r.\mathrm{conseq} \;\big|\; r \in S,\;
+  r.\mathrm{prereq} \in E_i,\; \forall \psi \in r.\mathrm{justs},\;
+  \Consistent(\Ext \cup \{\psi\})\bigr\}\Bigr).
+\]
+\end{definition}
+
+% ===========================================================================
+\section{Impossibility Lemmas for Closed Agent Loops}\label{sec:lemmas}
+
+We now establish four foundational lemmas governing any verification pipeline and
+self-reflection architecture confined to $F_c$.
+
+\begin{lemma}[Closure Under Finite Sub-Oracle Composition \& Bounded Test Harnesses]\label{lem:closure}
+Let $d_0 : \Code \to \mathrm{Bool}$ be a computable base verifier and let
+$\Os : \mathrm{List}(\Code \to \mathrm{Bool})$ be any finite list of computable
+verification sub-oracles ($\forall O \in \Os,\; \mathrm{Computable}(O)$). Then:
+\begin{enumerate}[label=(\alph*)]
+  \item The composite conjunctive pipeline $P_{\Os}(c) =
+    \Os.\mathrm{foldl}(\lambda\,b\,O \Rightarrow b \mathbin{\&\&} O(c),\, d_0(c))$
+    is computable ($\mathrm{Computable}(P_{\Os})$).
+  \item For every step bound $k \in \mathbb{N}$, test input $x \in \mathbb{N}$,
+    and expected output $y \in \mathbb{N}$, the bounded execution test harness
+    \[
+      T_{k,x,y}(c) \;=\; \mathrm{decide}\bigl(\evaln(k, c, x) = \mathrm{some}(y)\bigr)
+    \]
+    is computable ($\mathrm{Computable}(T_{k,x,y})$).
+\end{enumerate}
+\end{lemma}
+\leanref{TranscendenceTower.ExternalGroundingPlatform.pipeline\_foldl\_computable}
+\leanref{TranscendenceTower.ExternalGroundingPlatform.bounded\_test\_computable}
+
+\begin{proof}
+For (a), given any two computable Boolean predicates $f, g : \Code \to
+\mathrm{Bool}$, their pointwise conjunction $c \mapsto f(c) \mathbin{\&\&} g(c)$
+is definitionally equal to the conditional $\mathrm{cond}(f(c), g(c),
+\mathsf{false})$, which is computable by \texttt{Computable.cond}. Structural
+induction on the list $\Os$ with base case $d_0$ yields
+$\mathrm{Computable}(P_{\Os})$.
+
+For (b), Mathlib's \texttt{Nat.Partrec.Code.primrec\_evaln} establishes that the
+uncurried bounded interpreter $(k, c, x) \mapsto \evaln(k, c, x)$ is primitive
+recursive. Composing with the primitive recursive tuple injection $c \mapsto
+(k, (c, x))$ and decidable equality against the constant $\mathrm{some}(y)$
+(\texttt{Primrec.eq}) shows that the predicate $\evaln(k, c, x) =
+\mathrm{some}(y)$ is primitive recursive (\texttt{PrimrecPred.decide}), and
+hence computable via \texttt{Primrec.to\_comp}.
+\end{proof}
+
+\begin{lemma}[Multi-Oracle Semantic Undecidability via Rice's Theorem]\label{lem:rice}
+Let $\Spec \subseteq \Code$ be any extensional, non-trivial semantic
+specification of programs. For every computable base verifier
+$d_0 : \Code \to \mathrm{Bool}$ and every finite pipeline
+$\Os : \mathrm{List}(\Code \to \mathrm{Bool})$ of computable sub-oracles, there
+exists a witness program $c_* \in \Code$ on which the composite pipeline verdict
+disagrees with $\Spec$:
+\[
+  \bigl(P_{\Os}(c_*) = \mathsf{true}\bigr) \iff c_* \notin \Spec.
+\]
+Moreover, the concrete specification $\mathrm{haltingAtZeroSpec} = \{c \in \Code
+\mid (\eval(c)(0)).\mathrm{Dom}\}$ satisfies both extensionality and
+non-triviality, witnessed by $\Code.\mathrm{const}(0) \in
+\mathrm{haltingAtZeroSpec}$ and $\Code.\mathrm{find}(\Code.\mathrm{succ}) \notin
+\mathrm{haltingAtZeroSpec}$.
+\end{lemma}
+\leanref{TranscendenceTower.ExternalGroundingPlatform.pipeline\_rice\_undecidable}
+\leanref{TranscendenceTower.ExternalGroundingPlatform.halting\_at\_zero\_semantic\_nontrivial}
+
+\begin{proof}
+By Lemma~\ref{lem:closure}(a), $P_{\Os}$ is computable, so the accepted set
+$A_{\Os} = \{c \in \Code \mid P_{\Os}(c) = \mathsf{true}\}$ is a decidable
+computable predicate (\texttt{ComputablePred}). Suppose toward a contradiction
+that no program $c_*$ satisfies $(P_{\Os}(c_*) = \mathsf{true}) \iff c_* \notin
+\Spec$. By classical negation (\texttt{not\_exists} and \texttt{not\_iff}),
+every $c \in \Code$ satisfies $(P_{\Os}(c) = \mathsf{true}) \iff c \in \Spec$,
+so $\Spec = A_{\Os}$ is a \texttt{ComputablePred}. Applying Rice's theorem in the
+form \texttt{ComputablePred.rice\textsubscript{2}} to the extensional set $\Spec$
+forces either $\Spec = \emptyset$ or $\Spec = \mathrm{Set.univ}$, contradicting
+the existence of $c_{\mathrm{yes}} \in \Spec$ and $c_{\mathrm{no}} \notin \Spec$.
+\end{proof}
+
+\begin{lemma}[Closed-Loop Syntactic Collapse \& Undecidability Under Semantic Drift]\label{lem:collapse}
+Let $\Ax \subseteq \CForm\,A\,C$ be a context-free specification
+($\forall p \in \Ax,\; \IsBase(p)$) and let $S \subseteq \Rule\,A\,C$ be a
+proposition-uniform default rule schema ($\PropUniformRules(S)$) whose
+consequents $\mathrm{consequents}(S) = \{r.\mathrm{conseq} \mid r \in S\}$ are
+consistent with $\Ax$. Then for every Reiter extension $\Ext$ satisfying
+$\IsExtension(\Ax, S, \Ext)$:
+\begin{enumerate}[label=(\alph*)]
+  \item \textbf{Syntactic Collapse:} Every base formula $\varphi$ in the
+    extension is already a classical consequence of $\Ax$:
+    \[
+      \forall \varphi \in \CForm\,A\,C,\quad
+      \IsBase(\varphi) \implies \bigl(\varphi \in \Ext \iff \varphi \in \Cn(\Ax)\bigr).
+    \]
+  \item \textbf{Undecidability Under Semantic Drift:} If $G_* \in \CForm\,A\,C$
+    is a base requirement ($\IsBase(G_*)$) that holds in the target operational
+    environment $v_{\mathrm{real}} \in \CVal\,A\,C$ ($\Models(\Ax, v_{\mathrm{real}})$
+    and $\eval(v_{\mathrm{real}}, G_*) = \mathsf{true}$) while a drifted model
+    $v_{\mathrm{drift}} \in \CVal\,A\,C$ satisfies $\Ax$
+    ($\Models(\Ax, v_{\mathrm{drift}})$) but falsifies $G_*$
+    ($\eval(v_{\mathrm{drift}}, G_*) = \mathsf{false}$), then $G_*$ is strictly
+    undecidable in the closed loop:
+    \[
+      G_* \notin \Ext \quad\wedge\quad \neg G_* \notin \Ext.
+    \]
+\end{enumerate}
+\end{lemma}
+\leanref{TranscendenceTower.ExternalGroundingPlatform.closed\_loop\_syntactic\_collapse}
+\leanref{TranscendenceTower.ExternalGroundingPlatform.closed\_loop\_undecided\_under\_drift}
+
+\begin{proof}
+For (a), right-to-left holds because $\Cn(\Ax) = E_0 \subseteq \Ext$. Conversely,
+induction on the Reiter stage index $i$ (\texttt{stage\_subset\_Cn\_consequents})
+shows that $E_i \subseteq \Cn(\Ax \cup \mathrm{consequents}(S))$ for all $i$,
+hence $\Ext \subseteq \Cn(\Ax \cup \mathrm{consequents}(S))$. Since
+$\PropUniformRules(S)$ implies $\PropUniform(\mathrm{consequents}(S))$, suppose
+$\varphi \in \Ext$ is a base formula and let $M \models \Ax$ be an arbitrary
+model of $\Ax$. Pick a witness model $W \models \Ax \cup \mathrm{consequents}(S)$
+from $\Consistent(\Ax \cup \mathrm{consequents}(S))$ and define the constant
+truth-value substitution $\sigma_M = \mathrm{boolSubst}(M) : A \to \CForm\,A\,C$
+sending $a \mapsto \top$ if $M.\mathrm{atom}(a) = \mathsf{true}$ and $a \mapsto
+\bot$ otherwise. On every base formula $\psi$, structural induction shows
+$\eval(W, \mathrm{subst}(\sigma_M, \psi)) = \eval(M, \psi)$. Pulling $W$ back
+along $\sigma_M$ yields a valuation $W^{\sigma_M}$ that agrees with $M$ on base
+formulas and satisfies $\mathrm{consequents}(S)$ because
+$\mathrm{subst}(\sigma_M, \gamma) \in \mathrm{consequents}(S)$ for every
+$\gamma \in \mathrm{consequents}(S)$. Thus $W^{\sigma_M} \models \Ax \cup
+\mathrm{consequents}(S)$, forcing $\eval(M, \varphi) =
+\eval(W^{\sigma_M}, \varphi) = \mathsf{true}$, so $\varphi \in \Cn(\Ax)$.
+
+For (b), if $G_* \in \Ext$, part (a) gives $G_* \in \Cn(\Ax)$, which evaluated at
+$v_{\mathrm{drift}} \models \Ax$ forces $\eval(v_{\mathrm{drift}}, G_*) =
+\mathsf{true}$, contradicting $\eval(v_{\mathrm{drift}}, G_*) = \mathsf{false}$.
+Symmetrically, if $\neg G_* \in \Ext$, then $\IsBase(\neg G_*)$ and part (a) give
+$\neg G_* \in \Cn(\Ax)$, which evaluated at $v_{\mathrm{real}} \models \Ax$
+forces $\eval(v_{\mathrm{real}}, G_*) = \mathsf{false}$, contradicting
+$\eval(v_{\mathrm{real}}, G_*) = \mathsf{true}$.
+\end{proof}
+
+\begin{lemma}[Necessity and Sufficiency of Supervisory External Grounding]\label{lem:grounding}
+Let $\Ax \subseteq \CForm\,A\,C$ be a context-free specification and let
+$G_* \in \CForm\,A\,C$ be a base requirement with $G_* \notin \Cn(\Ax)$.
+\begin{enumerate}[label=(\alph*)]
+  \item \textbf{Necessity of Non-Uniformity:} For any lifting axiom set
+    $\LiftAx \subseteq \CForm\,A\,C$ such that $\Consistent(\Ax \cup \LiftAx)$
+    and $G_* \in \Cn(\Ax \cup \LiftAx)$, $\LiftAx$ cannot be proposition-uniform:
+    \[
+      \neg\,\PropUniform(\LiftAx).
+    \]
+  \item \textbf{Sufficiency and Soundness of Oracle Injection:} If
+    $v_{\mathrm{real}} \in \CVal\,A\,C$ satisfies $\Models(\Ax, v_{\mathrm{real}})$
+    and $\eval(v_{\mathrm{real}}, G_*) = \mathsf{true}$, then for any outer
+    operational context index $c_{\mathrm{real}} \in C$, the supervisory oracle
+    injection
+    \[
+      \LiftAx \;=\; \bigl\{\ist(c_{\mathrm{real}}, G_*),\;
+      \ist(c_{\mathrm{real}}, G_*) \to G_*\bigr\}
+    \]
+    satisfies $\Consistent(\Ax \cup \LiftAx)$, $G_* \in \Cn(\Ax \cup \LiftAx)$,
+    and $\neg\,\PropUniform(\LiftAx)$.
+\end{enumerate}
+\end{lemma}
+\leanref{TranscendenceTower.ExternalGroundingPlatform.necessary\_nonuniform\_grounding}
+\leanref{TranscendenceTower.ExternalGroundingPlatform.external\_oracle\_grounding\_sufficient}
+
+\begin{proof}
+Part (a) follows immediately from the monotone dichotomy: if $\PropUniform(\LiftAx)$
+held alongside $\Consistent(\Ax \cup \LiftAx)$ and $G_* \in \Cn(\Ax \cup \LiftAx)$,
+the substitution pullback argument of Lemma~\ref{lem:collapse}(a) would yield
+$G_* \in \Cn(\Ax)$, contradicting $G_* \notin \Cn(\Ax)$.
+
+For part (b), construct the meta-valuation $v^* = \mathrm{realityMetaVal}(v_{\mathrm{real}})$
+with atomic assignment $v^*.\mathrm{atom} = v_{\mathrm{real}}.\mathrm{atom}$ and
+modal table $v^*.\mathrm{ist}(c, p) = \eval(v_{\mathrm{real}}, p)$. Because base
+formulas contain no $\ist$ modalities (\texttt{eval\_eq\_of\_atom\_eq}), $v^*$
+agrees with $v_{\mathrm{real}}$ on $\Ax$ and on $G_*$. Hence $v^* \models \Ax$,
+$\eval(v^*, \ist(c_{\mathrm{real}}, G_*)) = \eval(v_{\mathrm{real}}, G_*) =
+\mathsf{true}$, and $\eval(v^*, \ist(c_{\mathrm{real}}, G_*) \to G_*) =
+\mathsf{true}$, witnessing $\Consistent(\Ax \cup \LiftAx)$. In any model of
+$\Ax \cup \LiftAx$, modus ponens on $\ist(c_{\mathrm{real}}, G_*)$ and
+$\ist(c_{\mathrm{real}}, G_*) \to G_*$ yields $G_* \in \Cn(\Ax \cup \LiftAx)$.
+Finally, part (a) gives $\neg\,\PropUniform(\LiftAx)$.
+\end{proof}
+
+% ===========================================================================
+\section{Main Result: The Theorem of Necessary External Grounding}\label{sec:main}
+
+Combining Lemmas~\ref{lem:closure}--\ref{lem:grounding} yields our main result,
+verified as a single four-part conjunction in Lean~4:
+
+\begin{theorem}[Theorem of Necessary External Grounding]\label{thm:main}
+For any atom type $A$ and context index type $C$:
+\begin{enumerate}[label=\textbf{(\arabic*)}]
+  \item \textbf{Multi-Oracle Rice Undecidability:} For every extensional,
+    non-trivial semantic specification $\Spec \subseteq \Code$, every computable
+    base verifier $d_0 : \Code \to \mathrm{Bool}$, and every finite pipeline
+    $\Os : \mathrm{List}(\Code \to \mathrm{Bool})$ of internalized computable
+    sub-oracles, there exists a program $c_* \in \Code$ such that
+    \[
+      \Bigl(\Os.\mathrm{foldl}\bigl(\lambda\,b\,O \Rightarrow b \mathbin{\&\&} O(c_*),\; d_0(c_*)\bigr) = \mathsf{true}\Bigr)
+      \iff c_* \notin \Spec.
+    \]
+  \item \textbf{Computability of Bounded Test Harnesses:} For all $k, x, y \in
+    \mathbb{N}$, the bounded-step execution test
+    $c \mapsto \mathrm{decide}(\evaln(k, c, x) = \mathrm{some}(y))$ is
+    computable, so adjoining any finite suite of bounded execution tests into
+    $\Os$ remains subject to Part~(1).
+  \item \textbf{Closed-Loop Undecidability Under Semantic Drift:} For any
+    context-free specification $\Ax \subseteq \CForm\,A\,C$, any
+    proposition-uniform rule schema $S \subseteq \Rule\,A\,C$ whose consequents
+    are consistent with $\Ax$, and any Reiter extension $\Ext$ of $(\Ax, S)$, if
+    a base requirement $G_*$ holds in $v_{\mathrm{real}} \models \Ax$ but fails
+    in a drifted model $v_{\mathrm{drift}} \models \Ax$, then
+    \[
+      G_* \notin \Ext \quad\wedge\quad \neg G_* \notin \Ext.
+    \]
+  \item \textbf{Soundness, Sufficiency, and Non-Uniformity of Supervisory Oracle
+    Grounding:} Under the hypotheses of Part~(3) with $G_* \notin \Cn(\Ax)$, for
+    any outer context $c_{\mathrm{real}} \in C$, the supervisory oracle injection
+    $\LiftAx = \{\ist(c_{\mathrm{real}}, G_*),\; \ist(c_{\mathrm{real}}, G_*) \to G_*\}$
+    satisfies
+    \[
+      \Consistent(\Ax \cup \LiftAx)
+      \;\wedge\;
+      G_* \in \Cn(\Ax \cup \LiftAx)
+      \;\wedge\;
+      \neg\,\PropUniform(\LiftAx).
+    \]
+\end{enumerate}
+\end{theorem}
+\leanref{TranscendenceTower.ExternalGroundingPlatform.necessary\_external\_grounding}
+
+\begin{proof}
+Part~(1) is Lemma~\ref{lem:rice} (\texttt{pipeline\_rice\_undecidable});
+Part~(2) is Lemma~\ref{lem:closure}(b) (\texttt{bounded\_test\_computable});
+Part~(3) is Lemma~\ref{lem:collapse}(b)
+(\texttt{closed\_loop\_undecided\_under\_drift}); and Part~(4) is
+Lemma~\ref{lem:grounding}(b) (\texttt{external\_oracle\_grounding\_sufficient}).
+\end{proof}
+
+% ===========================================================================
+\section{Stratified Oracle Architecture in Software Systems}\label{sec:arch}
+
+Theorem~\ref{thm:main} formalizes the division of labor in contemporary software
+engineering. Rather than competing with automated tools, the human engineer
+occupies the terminal meta-context of a stratified Tarski hierarchy
+($c_1 \subset c_2 \subset c_3 \subset c_{\mathrm{ToE}}$), where each outer tier
+supplies external grounding for the tier below (Table~\ref{tab:tiers}).
+
+\begin{table}[htbp]
+\centering
+\small
+\renewcommand{\arraystretch}{1.35}
+\begin{tabular}{@{}p{0.19\textwidth}p{0.19\textwidth}p{0.28\textwidth}p{0.28\textwidth}@{}}
+\toprule
+\textbf{Context Tier} & \textbf{Formal System Role} & \textbf{Certified Predicate ($\ist(c_i, P)$)} & \textbf{Undecidable Boundary (Tarski / Rice Wall)} \\
+\midrule
+\textbf{Tier 1:} LLM Synthesis Loop &
+  Base Core ($F_{c_1}$) &
+  Candidate AST synthesis and heuristic transformation via $\Ralg$. &
+  Cannot internally guarantee parse validity, type soundness, or termination. \\
+\textbf{Tier 2:} Compiler \& Runtime &
+  Syntactic Meta-Context ($M_{c_2}$) &
+  Certifies well-formedness, static type safety, and operational semantics. &
+  By Lemma~\ref{lem:rice} (Rice's Theorem), cannot decide non-trivial behavioral specifications $\Spec$. \\
+\textbf{Tier 3:} Automated Test Harness &
+  Behavioral Meta-Context ($M_{c_3}$) &
+  Certifies conformance to finite bounded-step execution assertions $T_{k,x,y}$. &
+  By Lemma~\ref{lem:closure}(b) \& Lemma~\ref{lem:collapse}, remains inside $\Ralg$ and cannot detect semantic drift when $\Ax$ underdetermines $G_*$. \\
+\textbf{Tier 4:} Software Engineer &
+  Supervisory Meta-Theory ($\MToE$) &
+  Executes $\Rnonalg$ to inject non-uniform $\LiftAx$ grounded in $\creal$. &
+  Bounded by cognitive throughput; delegates mechanical $\Ralg$ derivation to Tiers 1--3. \\
+\bottomrule
+\end{tabular}
+\caption{Stratified Tarski/McCarthy hierarchy of verification oracles in autonomous software engineering systems.}
+\label{tab:tiers}
+\end{table}
+
+% ===========================================================================
+\section{Mechanization in Lean 4 and Verification Audit}\label{sec:formal}
+
+The mathematical results of this paper are fully formalized in Lean~4
+(toolchain \texttt{leanprover/\allowbreak lean4:v4.33.1}, Mathlib revision
+\texttt{0df444a360eaa60ab8c11dca\allowbreak 51a86af692955474}). The development is organized
+into three layers:
+\begin{enumerate}[leftmargin=1.5em]
+  \item \texttt{Definitions/\allowbreak Def\_TranscendenceTower\allowbreak ContextUniformity.lean}:
+    Defines the modal context syntax $\CForm\,A\,C$, valuations $\CVal\,A\,C$,
+    classical consequence $\Cn$, atomic substitutions, $\PropUniform$, Reiter
+    default rules $\Rule\,A\,C$, stages, and $\IsExtension$. Publicly verified on
+    Prove2Me at \url{https://prove2.me/theorems/89533353-dc35-4de3-9a6e-9103fe665b59}.
+  \item \texttt{Development/\allowbreak ExternalGrounding.lean}: Contains the modular
+    development of Lemmas~\ref{lem:closure}--\ref{lem:grounding},
+    Theorem~\ref{thm:main}, concrete non-vacuity examples, and kernel axiom
+    audits.
+  \item \texttt{Solutions/\allowbreak Sol\_necessary\_external\_grounding.lean}: The
+    self-contained platform proof verified by the Prove2Me server kernel at
+    \url{https://prove2.me/theorems/a71af5a0-3cd4-4e9c-8d96-bfbd945414d4}
+    (submission \texttt{8746169b-208f-452c-9e81-\allowbreak ef4b3f931e4b}, status
+    \texttt{ACCEPTED}).
+\end{enumerate}
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}p{0.29\textwidth}p{0.37\textwidth}p{0.28\textwidth}@{}}
+\toprule
+\textbf{Paper Concept / Symbol} & \textbf{Lean 4 Declaration / Type} & \textbf{Module / Origin} \\
+\midrule
+Program code $P \in L_c$ & \texttt{Nat.Partrec.Code} & \texttt{Mathlib.Computability.\allowbreak PartrecCode} \\
+Unbounded evaluator $\eval(c)$ & \texttt{Nat.Partrec.Code.eval} & \texttt{Mathlib.Computability.\allowbreak PartrecCode} \\
+Bounded evaluator $\evaln(k,c,x)$ & \texttt{Nat.Partrec.Code.evaln} & \texttt{Mathlib.Computability.\allowbreak PartrecCode} \\
+Rice's Theorem on $\Code$ & \texttt{ComputablePred.rice\textsubscript{2}} & \texttt{Mathlib.Computability.\allowbreak Halting} \\
+Pipeline fold $P_{\Os}(c)$ & \texttt{Os.foldl (fun b O => b \&\& O c) (d\textsubscript{0} c)} & \texttt{ExternalGrounding.lean} \\
+Bounded test $T_{k,x,y}(c)$ & \texttt{bounded\_test\_computable} & \texttt{ExternalGrounding.lean} \\
+Context formula $\varphi \in \CForm\,A\,C$ & \texttt{CForm A C} / \texttt{CForm.ist c p} & \texttt{Def\_TranscendenceTower\allowbreak ContextUniformity} \\
+Base specification $\Sigma_c$ ($\Ax$) & \texttt{Ax : Set (CForm A C)}, \texttt{IsBase} & \texttt{Def\_TranscendenceTower\allowbreak ContextUniformity} \\
+Uniform reflection rules $S$ & \texttt{PropUniformRules S} & \texttt{Def\_TranscendenceTower\allowbreak ContextUniformity} \\
+Closed-loop extension $\Ext$ & \texttt{IsExtension Ax S Ext} & \texttt{Def\_TranscendenceTower\allowbreak ContextUniformity} \\
+Supervisory injection $\Sigma_T$ ($\LiftAx$) & \texttt{oracleGroundingSet c\_real G\_star} & \texttt{ExternalGrounding.lean} \\
+Main Theorem (Theorem~\ref{thm:main}) & \texttt{necessary\_external\_grounding} & \texttt{Sol\_necessary\_external\_\allowbreak grounding.lean} \\
+\bottomrule
+\end{tabular}
+\caption{Correspondence between mathematical notation and verified Lean~4 declarations.}
+\label{tab:lean}
+\end{table}
+
+\paragraph{Non-vacuity and kernel axiom audit.}
+A recurring hazard in mechanized meta-theory is proving theorems whose premises
+are vacuously satisfied by trivial or empty structures. To rule this out, the
+development includes explicit witness constructions:
+\texttt{halting\_at\_zero\_semantic\_nontrivial} proves that
+$\mathrm{haltingAtZeroSpec}$ satisfies both extensionality and non-triviality on
+\texttt{Nat.Partrec.Code}; and two non-vacuity \texttt{example} declarations
+instantiate the context-logic hypotheses on concrete two-point valuations over
+$A = \mathrm{Unit}$ and $C = \mathrm{Unit}$ where $\Ax = \emptyset$,
+$S = \mathrm{copyRules}$, $G_* = \mathrm{atom}^+(\star)$,
+$v_{\mathrm{real}}(\star) = \mathsf{true}$, and
+$v_{\mathrm{drift}}(\star) = \mathsf{false}$. Finally, \texttt{\#print axioms}
+confirms that \texttt{necessary\_external\_grounding} depends exclusively on
+Lean's three standard foundational axioms (\texttt{propext},
+\texttt{Classical.choice}, and \texttt{Quot.sound}), with zero occurrences of
+\texttt{sorryAx} or user-declared axioms.
+
+\paragraph{Disclosure: AI assistance.}
+The Lean~4 mechanization and the preparation of this manuscript were carried out
+using Antigravity (Google DeepMind), an agentic coding and formalization
+assistant, in an interactive workflow directed by the author, who conceived the
+theoretical framework, established the problem formulations, and directed the
+design of the formal specifications. As throughout the
+\texttt{mccarthy-contexts} project, the mathematical validity of the theorems
+does not rest on trust in the assistant: every definition and proof term is
+independently verified by the Lean~4 kernel and by the public Prove2Me
+verification server.
+
+% ===========================================================================
+\section{Conclusion}
+
+As generative models automate lower-order syntactic deduction ($\Ralg$), the
+software engineering role does not vanish; it elevates up the Tarski/McCarthy
+context hierarchy. Designing reliable autonomous software harnesses requires
+treating $F_c$ as a bounded syntactic sandbox, recognizing that finite cascades
+of computable test harnesses and proposition-uniform reflection rules remain
+subject to Rice's theorem and conservative collapse, and preserving the external
+human engineer (or supervisory physical oracle) as the authoritative semantic
+source governing non-uniform context lifting $\Sigma_T$.
+
+% ===========================================================================
+\begin{thebibliography}{99}
+
+\bibitem{faizal25}
+M.~Faizal, L.~M.~Krauss, A.~Shabir, and F.~Marino.
+Consequences of undecidability in physics on the theory of everything.
+\emph{arXiv preprint arXiv:2507.22950} [gr-qc], 2025.
+
+\bibitem{godel31}
+K.~G\"odel.
+\"Uber formal unentscheidbare S\"atze der Principia Mathematica und verwandter
+Systeme~I.
+\emph{Monatshefte f\"ur Mathematik und Physik}, 38(1):173--198, 1931.
+
+\bibitem{mathlib20}
+The mathlib Community.
+The Lean mathematical library.
+In \emph{Proceedings of the 9th ACM SIGPLAN International Conference on
+Certified Programs and Proofs (CPP 2020)}, pages 367--381, 2020.
+
+\bibitem{mccarthy93}
+J.~McCarthy.
+Notes on formalizing context.
+In \emph{Proceedings of the 13th International Joint Conference on Artificial
+Intelligence (IJCAI-93)}, pages 555--560, 1993.
+
+\bibitem{lean4}
+L.~de~Moura and S.~Ullrich.
+The Lean~4 theorem prover and programming language.
+In \emph{Automated Deduction -- CADE 28}, Lecture Notes in Computer Science,
+vol.~12699, pages 625--635. Springer, 2021.
+
+\bibitem{reiter80}
+R.~Reiter.
+A logic for default reasoning.
+\emph{Artificial Intelligence}, 13(1--2):81--132, 1980.
+
+\bibitem{rice53}
+H.~G.~Rice.
+Classes of recursively enumerable sets and their decision problems.
+\emph{Transactions of the American Mathematical Society}, 74(2):358--366, 1953.
+
+\bibitem{tarski36}
+A.~Tarski.
+Der Wahrheitsbegriff in den formalisierten Sprachen.
+\emph{Studia Philosophica}, 1:261--405, 1936.
+
+\bibitem{turing39}
+A.~M.~Turing.
+Systems of logic based on ordinals.
+\emph{Proceedings of the London Mathematical Society}, s2-45(1):161--228, 1939.
+
+\end{thebibliography}
+
+\end{document}
